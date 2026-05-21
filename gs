@@ -193,7 +193,7 @@ screenGui.DisplayOrder = 999
 screenGui.ResetOnSpawn = false        
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Цвета
+
 local bgColor = Color3.fromRGB(20, 20, 20)
 local textColor = Color3.new(1, 1, 1)
 
@@ -208,7 +208,7 @@ sideBgGradient.Transparency = NumberSequence.new({
 sideBgGradient.Rotation = 0
 sideBgGradient.Parent = sidePanel
 
--- Основной фрейм
+
 local frame = Instance.new("Frame")
 frame.Name = "MainFrame"
 frame.Size = UDim2.new(0, 125, 0, 20)
@@ -220,7 +220,7 @@ frame.BorderSizePixel = 0
 frame.Parent = screenGui
 createGradient().Parent = frame
 
--- Верхняя полоска
+
 local topLine = Instance.new("Frame")
 topLine.Size = UDim2.new(1, 0, 0, 1)
 topLine.BackgroundColor3 = bgColor
@@ -228,7 +228,7 @@ topLine.BorderSizePixel = 0
 topLine.Parent = frame
 createGradient().Parent = topLine
 
--- Нижняя полоска
+
 local bottomLine = Instance.new("Frame")
 bottomLine.Size = UDim2.new(1, 0, 0, 1)
 bottomLine.Position = UDim2.new(0, 0, 1, -1)
@@ -237,7 +237,7 @@ bottomLine.BorderSizePixel = 0
 bottomLine.Parent = frame
 createGradient().Parent = bottomLine
 
--- Контейнер для текста
+
 local container = Instance.new("Frame")
 container.Name = "TextContainer"
 container.Size = UDim2.new(1, -10, 1, 0)
@@ -289,7 +289,7 @@ local function createContainerGradient()
     return grad
 end
 
--- Функция создания контейнера
+
 local function createIndicatorContainer(yPos, labelText)
     local container = Instance.new("Frame")
     container.Size = UDim2.new(0, 1, 0, 18)  
@@ -299,7 +299,7 @@ local function createIndicatorContainer(yPos, labelText)
     container.Parent = SideIndGui
     createContainerGradient().Parent = container
 
-    -- Верхняя линия
+
     local topLine = Instance.new("Frame")
     topLine.Size = UDim2.new(1, 0, 0, 1)
     topLine.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
@@ -312,7 +312,7 @@ local function createIndicatorContainer(yPos, labelText)
         NumberSequenceKeypoint.new(1, 1)
     })
 
-    -- Нижняя линия
+
     local bottomLine = Instance.new("Frame")
     bottomLine.Size = UDim2.new(1, 0, 0, 1)
     bottomLine.Position = UDim2.new(0, 0, 1, -1)
@@ -326,7 +326,7 @@ local function createIndicatorContainer(yPos, labelText)
         NumberSequenceKeypoint.new(1, 1)
     })
 
-    -- Текст
+
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -10, 1, 0)
     label.Position = UDim2.new(0, 5, 0, 0)
@@ -366,7 +366,7 @@ createIndicator("RDL", "RDL: 0")
 
 
 local function UpdateSideIndicators(target, raysVisible)
-    -- Обновляем текст и цвета
+
     indicators["HC"].label.Text = string.format("HC: %d%%", ScriptState.Rage_Hitchance)
     indicators["HC"].label.TextColor3 = WHITE
     
@@ -2182,3 +2182,4 @@ MiscConfigSec:CreateButton("Unload UI", function()
     table.clear(originalColors)
     table.clear(originalTransparencies)
 end)
+-- i know its shit but i wanna know where i made mistakes
