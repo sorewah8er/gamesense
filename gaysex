@@ -24,7 +24,25 @@ image.Image = getcustomasset("Config.png")
 local image = Instance.new("ImageLabel", workspace)
 image.Image = getcustomasset("skeetintro.png")
 
-local ScriptState = getgenv().ScriptState
+if not ScriptState then ScriptState = {} end
+ScriptState.Misc = ScriptState.Misc or { CFrameSpeed = { Enabled = false, Speed = 5, Key = Enum.KeyCode.X } }
+ScriptState.Keybinds = ScriptState.Keybinds or {}
+
+ScriptState.Aimbot = ScriptState.Aimbot or {
+    Enabled = false,         
+    SilentAim = false,       
+    TeamCheck = true,
+    WallCheck = true,
+    AutoShootKey = Enum.KeyCode.None,
+    AutoShootMode = "Toggle",
+    AutoShootActive = false,
+    FaceTarget = false,
+    Hitchance = 100
+}
+
+ScriptState.Visuals = ScriptState.Visuals or {
+    TargetESP = true
+}
 
 --###############
 -- __watermark P2
@@ -82,7 +100,7 @@ sideBgGradient.Parent = sidePanel
 -- __mainframe
 local frame = Instance.new("Frame")
 frame.Name = "MainFrame"
-frame.Size = UDim2.new(0, 125, 0, 20)
+frame.Size = UDim2.new(0, 70, 0, 20)
 frame.Position = UDim2.new(1, 1, 0, 1)
 frame.AnchorPoint = Vector2.new(1, 0)
 frame.BackgroundColor3 = bgColor
@@ -117,7 +135,7 @@ container.BackgroundTransparency = 1
 container.Parent = frame
 
 local synapseLabel = Instance.new("TextLabel")
-synapseLabel.Size = UDim2.new(0, 110, 0.9, 0)
+synapseLabel.Size = UDim2.new(0, 60, 0.9, 0)
 synapseLabel.Position = UDim2.new(0, x, 0, 0)
 synapseLabel.BackgroundTransparency = 1
 synapseLabel.Font = Enum.Font.Code
@@ -126,7 +144,7 @@ synapseLabel.TextStrokeTransparency = 0.8
 synapseLabel.RichText = true
 synapseLabel.TextXAlignment = Enum.TextXAlignment.Center
 synapseLabel.TextYAlignment = Enum.TextYAlignment.Center
-synapseLabel.Text = '<font color="rgb(255,255,255)">game</font><font color="rgb(119,156,39)">sense</font><font color="rgb(255,255,255)">|</font><font color="rgb(255,255,255)">sk8er</font><font color="rgb(255,255,255)">|</font><font color="rgb(255,255,255)">replics</font>'
+synapseLabel.Text = '<font color="rgb(255,255,255)">game</font><font color="rgb(119,156,39)">sense</font>'
 synapseLabel.Parent = container
 
 --####################
@@ -228,35 +246,9 @@ local function createIndicator(id, defaultText)
     return container, label
 end
 
-createIndicator("HC", "HC")
-createIndicator("FS", "FS")
-createIndicator("MD", "MD")
-createIndicator("NS", "NS ")
-createIndicator("DT", "DT")
-createIndicator("Duck", "Duck")
-createIndicator("BA", "BA")
-
-    -- __text&colors#update
-    indicators["HC"].label.TextColor3 = WHITE
-    
-        indicators["FS"].label.Text = "FS"
-        indicators["FS"].label.TextColor3 = GREEN_ACCENT  
-    
-    indicators["MD"].label.Text = "MD"
-    indicators["MD"].label.TextColor3 = WHITE
-    
-    indicators["NS"].label.Text = "NS "
-    indicators["NS"].label.TextColor3 = GREEN_ACCENT
-    
-    indicators["DT"].label.Text = "DT"
-    indicators["DT"].label.TextColor3 = WHITE
-    
-    indicators["Duck"].label.Text = "Duck"
-    indicators["Duck"].label.TextColor3 = WHITE
-    
-    indicators["BA"].label.Text = "BA"
-    indicators["BA"].label.TextColor3 = WHITE
-    
+createIndicator("Silent", "silent")
+createIndicator("peek", "loud")
+     indicators["Silent"].label.TextColor3 = GREEN_ACCENT  
 
 -- #################################
 -- __configuration_system_prepare P4
@@ -290,11 +282,12 @@ local Library = { Flags = {}, Elements = {} }
 local Colors = { --__colors
     MainBG = Color3.fromRGB(12, 12, 12),
     SidebarBG = Color3.fromRGB(12, 12, 12),
-    SectionBG = Color3.fromRGB(23, 23, 23),
+    SectionBG = Color3.fromRGB(20, 20, 20),
     Border = Color3.fromRGB(0, 0, 0),
-    Text = Color3.fromRGB(205, 205, 205),
+    Text = Color3.fromRGB(245, 245, 245),
     TextDark = Color3.fromRGB(130, 130, 130),
-    Accent1 = Color3.fromRGB(168, 247, 32), 
+    TextWarn = Color3.fromRGB(191, 173, 31),
+    Accent1 = Color3.fromRGB(122, 163, 49), 
     Accent2 = Color3.fromRGB(180, 180, 180),
 }
 
@@ -377,14 +370,14 @@ function Library:CreateWindow(title) --__menu
     Sidebar.BackgroundColor3 = Colors.SidebarBG
     Sidebar.BorderSizePixel = 0
     Sidebar.Position = UDim2.new(0, 0, 0, 4)
-    Sidebar.Size = UDim2.new(0, 74, 1, -4)
+    Sidebar.Size = UDim2.new(0, 73, 1, -4)
 
     local SidebarLine = Instance.new("Frame") --__sidebarline
     SidebarLine.Parent = InnerFrame
     SidebarLine.BackgroundColor3 = Colors.Border
     SidebarLine.BorderSizePixel = 0
-    SidebarLine.Position = UDim2.new(0, 74, 0, 4)
-    SidebarLine.Size = UDim2.new(0, 1, 1, -4)
+    SidebarLine.Position = UDim2.new(0, 73, 0, 4)
+SidebarLine.Size = UDim2.new(0, 1, 1, -4)   -- remains 1 pixel wide
     SidebarLine.ZIndex = 2
 
     local TabListLayout = Instance.new("UIListLayout")
@@ -399,7 +392,7 @@ function Library:CreateWindow(title) --__menu
     TabContainer.Parent = InnerFrame
     TabContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     TabContainer.BorderSizePixel = 0
-    TabContainer.Position = UDim2.new(0, 75, 0, 4)
+    TabContainer.Position = UDim2.new(0, 74, 0, 4)
     TabContainer.Size = UDim2.new(1, -75, 1, -4)
 
     local Pattern = Instance.new("ImageLabel")
@@ -532,10 +525,11 @@ function Library:CreateWindow(title) --__menu
             GroupTitle.TextXAlignment = Enum.TextXAlignment.Left; GroupTitle.ZIndex = 5
 
             local TitleInline = Instance.new("Frame")
-            TitleInline.Parent = GroupBoxOuter; TitleInline.BackgroundColor3 = Colors.SectionBG
-            TitleInline.BorderSizePixel = 0; TitleInline.Position = UDim2.new(0, 9, 0, -1)
-            TitleInline.Size = UDim2.new(0, GroupTitle.TextBounds.X + 6, 0, 2)
-            TitleInline.ZIndex = 5
+           TitleInline.Parent = GroupBoxOuter; TitleInline.BackgroundColor3 = Colors.SectionBG
+           TitleInline.BackgroundTransparency = 1  
+           TitleInline.BorderSizePixel = 0; TitleInline.Position = UDim2.new(0, 9, 0, -1)
+           TitleInline.Size = UDim2.new(0, GroupTitle.TextBounds.X + 6, 0, 2)
+           TitleInline.ZIndex = 5
 
             task.spawn(function()
                 task.wait(0.1)
@@ -559,10 +553,10 @@ function Library:CreateWindow(title) --__menu
             function Section:CreateButton(name, callback)
                 local BtnHolder = Instance.new("Frame")
                 BtnHolder.Parent = ElementContainer; BtnHolder.BackgroundTransparency = 1
-                BtnHolder.Size = UDim2.new(1, 0, 0, 24)
+BtnHolder.Size = UDim2.new(1, -30, 0, 30)
 
                 local BtnOutline = Instance.new("Frame")
-                BtnOutline.Parent = BtnHolder; BtnOutline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+                BtnOutline.Parent = BtnHolder; Btn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
                 BtnOutline.BorderSizePixel = 0; BtnOutline.Position = UDim2.new(0, 0, 0, 2)
                 BtnOutline.Size = UDim2.new(1, 0, 1, -4)
 
@@ -711,14 +705,95 @@ function Library:CreateWindow(title) --__menu
                     end
                 end
 
+                -- __dropdown? shit
+local modeDropdown = nil
+local closeConnection = nil
+
+local function closeDropdown()
+    if modeDropdown then
+        modeDropdown:Destroy()
+        modeDropdown = nil
+    end
+    if closeConnection then
+        closeConnection:Disconnect()
+        closeConnection = nil
+    end
+end
+
+local function openModeDropdown()
+    closeDropdown()
+
+    local dd = Instance.new("Frame")
+    dd.Name = "ModeDropdown"
+    dd.BackgroundColor3 = Color3.fromRGB(16, 16, 16)      
+    dd.BorderColor3 = Color3.fromRGB(12, 12, 12)
+    dd.BorderSizePixel = 1
+    dd.Size = UDim2.new(0, 60, 0, #modes * 16)            
+    dd.Position = UDim2.new(1, -60, 1, 2)
+    dd.Parent = KeyFrame
+    dd.ZIndex = 15
+
+    for i, modeName in ipairs(modes) do
+        local btn = Instance.new("TextButton")
+        btn.Parent = dd
+        btn.Size = UDim2.new(1, 0, 0, 16)
+        btn.Position = UDim2.new(0, 0, 0, (i-1)*16)
+        btn.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
+        btn.BorderSizePixel = 0
+        btn.Font = Enum.Font.Arial
+        btn.Text = modeName
+        btn.TextColor3 = Colors.TextDark            
+        btn.TextSize = 9
+        btn.TextXAlignment = Enum.TextXAlignment.Center
+        btn.ZIndex = 16
+
+        
+        btn.MouseEnter:Connect(function()
+            btn.TextColor3 = Colors.Text            
+        end)
+        btn.MouseLeave:Connect(function()
+            btn.TextColor3 = Colors.TextDark        
+        end)
+
+        btn.MouseButton1Click:Connect(function()
+            setMode(modeName)
+            closeDropdown()
+        end)
+    end
+
+    modeDropdown = dd
+
+    
+    closeConnection = UserInputService.InputBegan:Connect(function(input, gpe)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if modeDropdown then
+                local mousePos = UserInputService:GetMouseLocation()
+                local ddAbs = modeDropdown.AbsolutePosition
+                local ddSize = modeDropdown.AbsoluteSize
+                if mousePos.X < ddAbs.X or mousePos.X > ddAbs.X + ddSize.X
+                    or mousePos.Y < ddAbs.Y or mousePos.Y > ddAbs.Y + ddSize.Y then
+                    closeDropdown()
+                end
+            else
+                closeDropdown()
+            end
+        end
+    end)
+end
+
+                
+                KeyBtn.MouseButton2Click:Connect(function()
+                    if modeDropdown then
+                        closeDropdown()   
+                    else
+                        openModeDropdown()
+                    end
+                end)
+
+                
                 KeyBtn.MouseButton1Click:Connect(function()
                     binding = true
                     KeyBtn.Text = "[...]"
-                end)
-                KeyBtn.MouseButton2Click:Connect(function()
-                    local idx = table.find(modes, settings.Mode) or 1
-                    local newMode = modes[(idx % #modes) + 1]
-                    setMode(newMode)
                 end)
 
                 local function inputBegan(input, gpe)
@@ -792,7 +867,7 @@ function Library:CreateWindow(title) --__menu
                 Outline.Size = UDim2.new(1, 0, 0, 7)
 
                 local BG = Instance.new("Frame")
-                BG.Parent = Outline; BG.BackgroundColor3 = Color3.fromRGB(71, 71, 71)
+                BG.Parent = Outline; BG.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
                 BG.BorderSizePixel = 0; BG.Position = UDim2.new(0, 1, 0, 1)
                 BG.Size = UDim2.new(1, -2, 1, -2)
 
@@ -1193,3 +1268,386 @@ sound:Play()
 --?Sec:CreateDropdown("?", "?", {"1", "2", "3", "4"}, ScriptState.?, function(v) ScriptState.? = v end)
 --?Sec:CreateColorPicker("?", "?", ScriptState.?, function(c, a) ScriptState.? = c end)
 --?Sec:CreateButton("? (?)", function(?)
+
+
+
+local MiscSpeed = TabMisc:CreateSection("C-Frame Speed", "Left")
+MiscSpeed:CreateToggle("CFrameSpeed_Enabled", "Enable", ScriptState.Misc.CFrameSpeed.Enabled, function(val)
+    ScriptState.Misc.CFrameSpeed.Enabled = val
+end)
+MiscSpeed:CreateKeybind("CFrameSpeed_Key", "Speed Key", {
+    Key = ScriptState.Misc.CFrameSpeed.Key or Enum.KeyCode.X,
+    Mode = ScriptState.Misc.CFrameSpeed.Mode or "Toggle"
+}, function(settings)
+    ScriptState.Misc.CFrameSpeed.Enabled = settings.Active
+end)
+MiscSpeed:CreateSlider("CFrameSpeed_Value", "Speed", 1, 50, ScriptState.Misc.CFrameSpeed.Speed, function(val)
+    ScriptState.Misc.CFrameSpeed.Speed = val
+end, 0.1)
+
+local AimbotLeft = TabAimbot:CreateSection("Silent Aim", "Left")
+AimbotLeft:CreateToggle("SilentAim_Enabled", "Enable Silent Aim", ScriptState.Aimbot.Enabled, function(val)
+    ScriptState.Aimbot.Enabled = val
+    ScriptState.Aimbot.SilentAim = val
+end)
+AimbotLeft:CreateToggle("FaceTarget", "Face Target", ScriptState.Aimbot.FaceTarget, function(val)
+    ScriptState.Aimbot.FaceTarget = val
+end)
+
+local AimbotRight = TabAimbot:CreateSection("Settings", "Right")
+AimbotRight:CreateToggle("TeamCheck", "Team Check", ScriptState.Aimbot.TeamCheck, function(val)
+    ScriptState.Aimbot.TeamCheck = val
+end)
+AimbotRight:CreateToggle("VisibleCheck", "Visible Check", ScriptState.Aimbot.WallCheck, function(val)
+    ScriptState.Aimbot.WallCheck = val
+end)
+
+AimbotRight:CreateKeybind("AutoShoot", "Auto Shoot", {
+    Key = ScriptState.Aimbot.AutoShootKey or Enum.KeyCode.None,
+    Mode = ScriptState.Aimbot.AutoShootMode or "Toggle"
+}, function(settings)
+    ScriptState.Aimbot.AutoShootActive = settings.Active
+    ScriptState.Aimbot.AutoShootKey = settings.Key
+    ScriptState.Aimbot.AutoShootMode = settings.Mode
+end)
+
+AimbotRight:CreateSlider("Hitchance", "Hitchance", 0, 100, ScriptState.Aimbot.Hitchance, function(val)
+    ScriptState.Aimbot.Hitchance = val
+end, 1)
+
+local VisualESP = TabVisuals:CreateSection("ESP", "Left")
+VisualESP:CreateToggle("TargetESP", "Target ESP", ScriptState.Visuals.TargetESP, function(val)
+    ScriptState.Visuals.TargetESP = val
+ESPSec:CreateButton("mewo (mewo)")
+end)
+
+
+local CurrentTarget = nil
+local CurrentHitPart = nil
+
+local PriorityParts = {"Head", "HumanoidRootPart", "Torso", "UpperTorso", "LowerTorso"}
+local MaxRange = 9999
+
+
+local function IsAlive(plr)
+    if plr and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
+        return true
+    end
+    return false
+end
+
+local function GetTargetPosition(part)
+    return part and part.Position or Vector3.new(0,0,0)
+end
+
+local function CheckVisibility(origin, targetPart)
+    if not ScriptState.Aimbot.WallCheck then return true end
+    local direction = targetPart.Position - origin
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    rayParams.IgnoreWater = true
+    local result = Workspace:Raycast(origin, direction, rayParams)
+    if result and result.Instance:IsDescendantOf(targetPart.Parent) then return true end
+    if result then return false end
+    return true
+end
+
+local function GetClosestTarget()
+    local closestPlr = nil
+    local shortestDistance = MaxRange
+    local bestPart = nil
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and IsAlive(plr) and IsAlive(LocalPlayer) then
+            local isTeammate = (ScriptState.Aimbot.TeamCheck and plr.Team == LocalPlayer.Team)
+            local hasForceField = plr.Character and plr.Character:FindFirstChildOfClass("ForceField")
+            if not isTeammate and not hasForceField then
+                local char = plr.Character
+                local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if not myRoot then return nil, nil end
+                local targetRoot = char:FindFirstChild("HumanoidRootPart")
+                if targetRoot then
+                    local dist = (targetRoot.Position - myRoot.Position).Magnitude
+                    if dist < shortestDistance then
+                        for _, partName in pairs(PriorityParts) do
+                            local part = char:FindFirstChild(partName)
+                            if part and CheckVisibility(Camera.CFrame.Position, part) then
+                                closestPlr = plr
+                                shortestDistance = dist
+                                bestPart = part
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closestPlr, bestPart
+end
+
+
+local ESPContainer = Instance.new("ScreenGui")
+ESPContainer.Name = "TargetESP"
+ESPContainer.ResetOnSpawn = false
+ESPContainer.IgnoreGuiInset = true
+pcall(function() ESPContainer.Parent = (gethui and gethui()) or CoreGui end)
+if not ESPContainer.Parent then
+    local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
+    if playerGui then ESPContainer.Parent = playerGui end
+end
+
+local ESPData = {
+    TextLabel = nil,
+    CornerBoxFrames = {},
+    LastModel = nil
+}
+
+local function ClearESP()
+    if ESPData.TextLabel then
+        ESPData.TextLabel:Destroy()
+        ESPData.TextLabel = nil
+    end
+    for _, f in ipairs(ESPData.CornerBoxFrames) do
+        f:Destroy()
+    end
+    ESPData.CornerBoxFrames = {}
+    ESPData.LastModel = nil
+end
+
+local function CreateCornerFrame(color)
+    local f = Instance.new("Frame")
+    f.BackgroundColor3 = color or Color3.fromRGB(255, 0, 0)
+    f.BorderSizePixel = 0
+    f.Parent = ESPContainer
+    return f
+end
+
+local function UpdateTargetESP(model)
+    if not model or not ScriptState.Visuals.TargetESP then
+        ClearESP()
+        return
+    end
+
+    local head = model:FindFirstChild("Head") or model:FindFirstChild("HumanoidRootPart")
+    if not head then
+        ClearESP()
+        return
+    end
+
+
+    if ESPData.LastModel ~= model then
+        ClearESP()
+        ESPData.LastModel = model
+    end
+
+
+    if not ESPData.TextLabel then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Adornee = head
+        billboard.Size = UDim2.new(0, 40, 0, 40)
+        billboard.StudsOffsetWorldSpace = Vector3.new(0, 2, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = head
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 24
+        label.TextColor3 = Color3.fromRGB(255, 0, 0)
+        label.Text = "X"
+        label.TextStrokeTransparency = 0
+        label.Parent = billboard
+
+        ESPData.TextLabel = billboard
+    end
+
+
+    if #ESPData.CornerBoxFrames == 0 then
+        for _ = 1, 8 do
+            local f = CreateCornerFrame(Color3.fromRGB(255, 0, 0))
+            table.insert(ESPData.CornerBoxFrames, f)
+        end
+    end
+
+    local cf, size = model:GetBoundingBox()
+    local corners = {
+        (cf * CFrame.new(-size.X/2, -size.Y/2, -size.Z/2)).Position,
+        (cf * CFrame.new( size.X/2, -size.Y/2, -size.Z/2)).Position,
+        (cf * CFrame.new(-size.X/2, -size.Y/2,  size.Z/2)).Position,
+        (cf * CFrame.new( size.X/2, -size.Y/2,  size.Z/2)).Position,
+        (cf * CFrame.new(-size.X/2,  size.Y/2, -size.Z/2)).Position,
+        (cf * CFrame.new( size.X/2,  size.Y/2, -size.Z/2)).Position,
+        (cf * CFrame.new(-size.X/2,  size.Y/2,  size.Z/2)).Position,
+        (cf * CFrame.new( size.X/2,  size.Y/2,  size.Z/2)).Position,
+    }
+
+    local screenCorners = {}
+    for _, worldPos in ipairs(corners) do
+        local screenPos, onScreen = Camera:WorldToViewportPoint(worldPos)
+        screenCorners[#screenCorners+1] = {pos = Vector2.new(screenPos.X, screenPos.Y), onScreen = onScreen}
+    end
+
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+    for _, sc in ipairs(screenCorners) do
+        if sc.onScreen then
+            minX = math.min(minX, sc.pos.X)
+            minY = math.min(minY, sc.pos.Y)
+            maxX = math.max(maxX, sc.pos.X)
+            maxY = math.max(maxY, sc.pos.Y)
+        end
+    end
+
+    if minX == math.huge then
+        for _, f in ipairs(ESPData.CornerBoxFrames) do f.Visible = false end
+        return
+    end
+
+    local cornerLen = 10
+    local thickness = 2
+
+    ESPData.CornerBoxFrames[1].Size = UDim2.new(0, cornerLen, 0, thickness)
+    ESPData.CornerBoxFrames[1].Position = UDim2.new(0, minX, 0, minY)
+    ESPData.CornerBoxFrames[1].Visible = true
+    ESPData.CornerBoxFrames[2].Size = UDim2.new(0, thickness, 0, cornerLen)
+    ESPData.CornerBoxFrames[2].Position = UDim2.new(0, minX, 0, minY)
+    ESPData.CornerBoxFrames[2].Visible = true
+
+    ESPData.CornerBoxFrames[3].Size = UDim2.new(0, cornerLen, 0, thickness)
+    ESPData.CornerBoxFrames[3].Position = UDim2.new(0, maxX - cornerLen, 0, minY)
+    ESPData.CornerBoxFrames[3].Visible = true
+    ESPData.CornerBoxFrames[4].Size = UDim2.new(0, thickness, 0, cornerLen)
+    ESPData.CornerBoxFrames[4].Position = UDim2.new(0, maxX, 0, minY)
+    ESPData.CornerBoxFrames[4].Visible = true
+
+    ESPData.CornerBoxFrames[5].Size = UDim2.new(0, cornerLen, 0, thickness)
+    ESPData.CornerBoxFrames[5].Position = UDim2.new(0, minX, 0, maxY - thickness)
+    ESPData.CornerBoxFrames[5].Visible = true
+    ESPData.CornerBoxFrames[6].Size = UDim2.new(0, thickness, 0, cornerLen)
+    ESPData.CornerBoxFrames[6].Position = UDim2.new(0, minX, 0, maxY - cornerLen)
+    ESPData.CornerBoxFrames[6].Visible = true
+
+    ESPData.CornerBoxFrames[7].Size = UDim2.new(0, cornerLen, 0, thickness)
+    ESPData.CornerBoxFrames[7].Position = UDim2.new(0, maxX - cornerLen, 0, maxY - thickness)
+    ESPData.CornerBoxFrames[7].Visible = true
+    ESPData.CornerBoxFrames[8].Size = UDim2.new(0, thickness, 0, cornerLen)
+    ESPData.CornerBoxFrames[8].Position = UDim2.new(0, maxX, 0, maxY - cornerLen)
+    ESPData.CornerBoxFrames[8].Visible = true
+end
+
+
+local hookmetamethod = hookmetamethod or function(...) return ... end
+local newcclosure = newcclosure or function(f) return f end
+local checkcaller = checkcaller or function() return false end
+local getnamecallmethod = getnamecallmethod or function() return "" end
+local mouse1click = mouse1click or function() end
+
+local OldNameCall = nil
+OldNameCall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+    local Args = {...}
+    local Method = getnamecallmethod()
+
+    if ScriptState.Aimbot.Enabled and CurrentHitPart and not checkcaller() then
+        local Chance = math.random(1, 100) <= ScriptState.Aimbot.Hitchance
+        if Chance then
+            local hitPos = GetTargetPosition(CurrentHitPart)
+            if Method == "Raycast" and (self == Workspace or self == workspace) then
+                if typeof(Args[1]) == "Vector3" and typeof(Args[2]) == "Vector3" then
+                    Args[2] = (hitPos - Args[1]).Unit * 10000
+                    return OldNameCall(self, unpack(Args))
+                end
+            end
+            if (Method == "FindPartOnRay" or Method == "FindPartOnRayWithWhitelist" or Method == "FindPartOnRayWithIgnoreList") and (self == Workspace or self == workspace) then
+                if typeof(Args[1]) == "Ray" then
+                    Args[1] = Ray.new(Args[1].Origin, (hitPos - Args[1].Origin).Unit * 10000)
+                    return OldNameCall(self, unpack(Args))
+                end
+            end
+            if (self == Mouse or tostring(self) == "Mouse") then
+                if Method == "Hit" then return CFrame.new(hitPos)
+                elseif Method == "Target" then return CurrentHitPart end
+            end
+            if Method == "FireServer" and ScriptState.Aimbot.RemoteDetection then 
+                for i, arg in pairs(Args) do
+                    if typeof(arg) == "Vector3" then
+                        if (arg - Camera.CFrame.Position).Magnitude > 5 then Args[i] = hitPos end
+                    elseif typeof(arg) == "CFrame" then
+                        if (arg.Position - Camera.CFrame.Position).Magnitude > 5 then Args[i] = CFrame.new(hitPos) end
+                    end
+                end
+                return OldNameCall(self, unpack(Args))
+            end
+        end
+    end
+    return OldNameCall(self, ...)
+end))
+
+local OldIndex = nil
+OldIndex = hookmetamethod(game, "__index", newcclosure(function(self, Key)
+    if not checkcaller() and ScriptState.Aimbot.Enabled and CurrentHitPart then
+        if (self == Mouse or tostring(self) == "Mouse") then
+            if Key == "Hit" then return CFrame.new(GetTargetPosition(CurrentHitPart))
+            elseif Key == "Target" then return CurrentHitPart end
+        end
+    end
+    return OldIndex(self, Key)
+end))
+
+
+RunService.Heartbeat:Connect(function(dt)
+    if ScriptState.Misc.CFrameSpeed.Enabled then
+        local char = LocalPlayer.Character
+        if char then
+            local root = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChild("Humanoid")
+            if root and hum then
+                local moveDir = hum.MoveDirection
+                if moveDir.Magnitude > 0 then
+                    root.CFrame = root.CFrame + (moveDir * ScriptState.Misc.CFrameSpeed.Speed * dt)
+                end
+            end
+        end
+    end
+
+
+    if not ScriptState.Aimbot.Enabled then
+        CurrentTarget = nil
+        CurrentHitPart = nil
+        ClearESP()
+        return
+    end
+
+    local target, hitPart = GetClosestTarget()
+    CurrentTarget = target
+    CurrentHitPart = hitPart
+
+    if target and target.Character then
+        UpdateTargetESP(target.Character)
+    else
+        ClearESP()
+    end
+
+    if CurrentTarget and CurrentHitPart then
+        local hitPos = GetTargetPosition(CurrentHitPart)
+
+
+        if ScriptState.Aimbot.FaceTarget then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local root = char.HumanoidRootPart
+                root.CFrame = CFrame.new(root.Position, Vector3.new(hitPos.X, root.Position.Y, hitPos.Z))
+            end
+        end
+
+
+        if ScriptState.Aimbot.AutoShootActive then
+            pcall(function() mouse1click() end)
+            if VirtualInputManager then
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+            end
+        end
+    end
+end)
