@@ -24,25 +24,18 @@ image.Image = getcustomasset("Config.png")
 local image = Instance.new("ImageLabel", workspace)
 image.Image = getcustomasset("skeetintro.png")
 
-if not ScriptState then ScriptState = {} end
-ScriptState.Misc = ScriptState.Misc or { CFrameSpeed = { Enabled = false, Speed = 5, Key = Enum.KeyCode.X } }
-ScriptState.Keybinds = ScriptState.Keybinds or {}
-
-ScriptState.Aimbot = ScriptState.Aimbot or {
-    Enabled = false,         
-    SilentAim = false,       
-    TeamCheck = true,
-    WallCheck = true,
-    AutoShootKey = Enum.KeyCode.None,
-    AutoShootMode = "Toggle",
-    AutoShootActive = false,
-    FaceTarget = false,
-    Hitchance = 100
+local FontAsset = getcustomasset("VerdanaBd.ttf")
+local FontMetadata = {
+    name = "VerdanaBd",
+    faces = {{
+        name = "Regular",
+        weight = 400,
+        style = "normal",
+        assetId = FontAsset
+    }}
 }
-
-ScriptState.Visuals = ScriptState.Visuals or {
-    TargetESP = true
-}
+writefile("VerdanaBd.json", HttpService:JSONEncode(fontMetadata))
+local CustomFont = Font.new(getcustomasset("VerdanaBd.json"), Enum.FontWeight.Regular)
 
 --###############
 -- __watermark P2
@@ -138,8 +131,8 @@ local synapseLabel = Instance.new("TextLabel")
 synapseLabel.Size = UDim2.new(0, 60, 0.9, 0)
 synapseLabel.Position = UDim2.new(0, x, 0, 0)
 synapseLabel.BackgroundTransparency = 1
-synapseLabel.Font = Enum.Font.Code
-synapseLabel.TextSize = 11
+synapseLabel.FontFace = CustomFont
+synapseLabel.TextSize = 13
 synapseLabel.TextStrokeTransparency = 0.8
 synapseLabel.RichText = true
 synapseLabel.TextXAlignment = Enum.TextXAlignment.Center
@@ -221,7 +214,7 @@ local function createIndicatorContainer(yPos, labelText)
     label.Size = UDim2.new(1, -10, 1, 0)
     label.Position = UDim2.new(0, 5, 0, 0)
     label.BackgroundTransparency = 1
-    label.Font = Enum.Font.SourceSansSemibold
+    label.FontFace = CustomFont
     label.TextSize = 29
     label.TextColor3 = WHITE
     label.TextXAlignment = Enum.TextXAlignment.Center
@@ -246,8 +239,8 @@ local function createIndicator(id, defaultText)
     return container, label
 end
 
-createIndicator("Silent", "silent")
-createIndicator("peek", "loud")
+createIndicator("Silent", "Silent")
+createIndicator("Trigger", "Trigger")
      indicators["Silent"].label.TextColor3 = GREEN_ACCENT  
 
 -- #################################
@@ -280,14 +273,14 @@ end
 local Library = { Flags = {}, Elements = {} }
 
 local Colors = { --__colors
-    MainBG = Color3.fromRGB(12, 12, 12),
+    MainBG = Color3.fromRGB(22, 22, 22),
     SidebarBG = Color3.fromRGB(12, 12, 12),
-    SectionBG = Color3.fromRGB(20, 20, 20),
+    SectionBG = Color3.fromRGB(23, 23, 23),
     Border = Color3.fromRGB(0, 0, 0),
-    Text = Color3.fromRGB(245, 245, 245),
+    Text = Color3.fromRGB(176, 176, 176),
     TextDark = Color3.fromRGB(130, 130, 130),
-    TextWarn = Color3.fromRGB(191, 173, 31),
-    Accent1 = Color3.fromRGB(122, 163, 49), 
+    TextWarn = Color3.fromRGB(146, 146, 43),
+    Accent1 = Color3.fromRGB(156, 208, 48), 
     Accent2 = Color3.fromRGB(180, 180, 180),
 }
 
@@ -520,8 +513,15 @@ SidebarLine.Size = UDim2.new(0, 1, 1, -4)   -- remains 1 pixel wide
             GroupTitle.Parent = GroupBoxOuter; GroupTitle.BackgroundColor3 = Colors.SectionBG
             GroupTitle.BackgroundTransparency = 1; GroupTitle.BorderSizePixel = 0
             GroupTitle.Position = UDim2.new(0, 12, 0, 0); GroupTitle.Size = UDim2.new(1, -26, 0, 15)
-            GroupTitle.Font = Enum.Font.Arial; GroupTitle.Text = titleText
-            GroupTitle.TextColor3 = Colors.Text; GroupTitle.TextSize = 11
+            GroupTitle.Font = Enum.Font.GothamBold; GroupTitle.Text = titleText
+            GroupTitle.TextColor3 = Colors.Text; GroupTitle.TextSize = 10
+            
+            local outline = Instance.new("UIStroke")
+outline.Color = Color3.fromRGB(25, 25, 25)   
+outline.Thickness = 2                     
+outline.Transparency = 0                  
+outline.Parent = GroupTitle
+            
             GroupTitle.TextXAlignment = Enum.TextXAlignment.Left; GroupTitle.ZIndex = 5
 
             local TitleInline = Instance.new("Frame")
@@ -563,8 +563,8 @@ BtnHolder.Size = UDim2.new(1, -30, 0, 30)
                 local Btn = Instance.new("TextButton") --__textbtn
                 Btn.Parent = BtnOutline; Btn.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
                 Btn.BorderSizePixel = 0; Btn.Position = UDim2.new(0, 1, 0, 1)
-                Btn.Size = UDim2.new(1, -2, 1, -2); Btn.Font = Enum.Font.Arial
-                Btn.Text = name; Btn.TextColor3 = Colors.Text; Btn.TextSize = 11
+                Btn.Size = UDim2.new(1, -2, 1, -2); Btn.FontFace = CustomFont
+                Btn.Text = name; Btn.TextColor3 = Colors.Text; Btn.TextSize = 15
                 
                 local BtnGradient = Instance.new("UIGradient", Btn)
                 BtnGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(140, 140, 140))}
@@ -586,8 +586,8 @@ BtnHolder.Size = UDim2.new(1, -30, 0, 30)
 
                 local Title = Instance.new("TextLabel")
                 Title.Parent = InputFrame; Title.BackgroundTransparency = 1
-                Title.Size = UDim2.new(1, 0, 0, 14); Title.Font = Enum.Font.Highway
-                Title.Text = name; Title.TextColor3 = Colors.Text; Title.TextSize = 10
+                Title.Size = UDim2.new(1, 0, 0, 14); Title.FontFace = CustomFont
+                Title.Text = name; Title.TextColor3 = Colors.Text; Title.TextSize = 12
                 Title.TextXAlignment = Enum.TextXAlignment.Left
 
                 local Outline = Instance.new("Frame")
@@ -598,7 +598,7 @@ BtnHolder.Size = UDim2.new(1, -30, 0, 30)
                 local TextBox = Instance.new("TextBox")
                 TextBox.Parent = Outline; TextBox.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
                 TextBox.BorderSizePixel = 0; TextBox.Position = UDim2.new(0, 1, 0, 1)
-                TextBox.Size = UDim2.new(1, -2, 1, -2); TextBox.Font = Enum.Font.Arial
+                TextBox.Size = UDim2.new(1, -2, 1, -2); TextBox.FontFace = CustomFont
                 TextBox.Text = ""; TextBox.PlaceholderText = placeholder or ""
                 TextBox.TextColor3 = Colors.Text; TextBox.PlaceholderColor3 = Colors.TextDark
                 TextBox.TextSize = 10; TextBox.TextXAlignment = Enum.TextXAlignment.Left
@@ -649,8 +649,8 @@ BtnHolder.Size = UDim2.new(1, -30, 0, 30)
                 local Title = Instance.new("TextLabel")
                 Title.Parent = ToggleFrame; Title.BackgroundTransparency = 1
                 Title.Position = UDim2.new(0, 16, 0, 0); Title.Size = UDim2.new(1, -16, 1, 0)
-                Title.Font = Enum.Font.ArialBold; Title.Text = name
-                Title.TextColor3 = toggled and Colors.Text or Colors.TextDark; Title.TextSize = 10
+                Title.FontFace = CustomFont; Title.Text = name
+                Title.TextColor3 = toggled and Colors.Text or Colors.TextDark; Title.TextSize = 13
                 Title.TextXAlignment = Enum.TextXAlignment.Left
 
                 local function SetState(state)
@@ -678,14 +678,14 @@ BtnHolder.Size = UDim2.new(1, -30, 0, 30)
 
                 local Title = Instance.new("TextLabel")
                 Title.Parent = KeyFrame; Title.BackgroundTransparency = 1
-                Title.Size = UDim2.new(1, -60, 1, 0); Title.Font = Enum.Font.Arial
-                Title.Text = name; Title.TextColor3 = Colors.Text; Title.TextSize = 10
+                Title.Size = UDim2.new(1, -60, 1, 0); Title.FontFace = CustomFont
+                Title.Text = name; Title.TextColor3 = Colors.TextDark; Title.TextSize = 12
                 Title.TextXAlignment = Enum.TextXAlignment.Left
 
                 local KeyBtn = Instance.new("TextButton")
                 KeyBtn.Parent = KeyFrame; KeyBtn.BackgroundTransparency = 1
                 KeyBtn.Position = UDim2.new(1, -80, 0, 0); KeyBtn.Size = UDim2.new(0, 80, 1, 0)
-                KeyBtn.Font = Enum.Font.Arial; KeyBtn.TextColor3 = Colors.TextDark; KeyBtn.TextSize = 10
+                KeyBtn.FontFace = CustomFont; KeyBtn.TextColor3 = Colors.TextDark; KeyBtn.TextSize = 12
                 KeyBtn.TextXAlignment = Enum.TextXAlignment.Right
 
                 local function updateUI()
@@ -725,11 +725,11 @@ local function openModeDropdown()
 
     local dd = Instance.new("Frame")
     dd.Name = "ModeDropdown"
-    dd.BackgroundColor3 = Color3.fromRGB(16, 16, 16)      
-    dd.BorderColor3 = Color3.fromRGB(12, 12, 12)
-    dd.BorderSizePixel = 1
-    dd.Size = UDim2.new(0, 60, 0, #modes * 16)            
-    dd.Position = UDim2.new(1, -60, 1, 2)
+    dd.BackgroundColor3 = Color3.fromRGB(32, 32, 32)      
+    dd.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    dd.BorderSizePixel = 0
+    dd.Size = UDim2.new(0, 50, 0, #modes * 16)            
+    dd.Position = UDim2.new(1, -50, 1, 2)
     dd.Parent = KeyFrame
     dd.ZIndex = 15
 
@@ -738,13 +738,13 @@ local function openModeDropdown()
         btn.Parent = dd
         btn.Size = UDim2.new(1, 0, 0, 16)
         btn.Position = UDim2.new(0, 0, 0, (i-1)*16)
-        btn.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
+        btn.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
         btn.BorderSizePixel = 0
-        btn.Font = Enum.Font.Arial
+        btn.FontFace = CustomFont
         btn.Text = modeName
         btn.TextColor3 = Colors.TextDark            
-        btn.TextSize = 9
-        btn.TextXAlignment = Enum.TextXAlignment.Center
+        btn.TextSize = 11
+        btn.TextXAlignment = Enum.TextXAlignment.Left
         btn.ZIndex = 16
 
         
@@ -763,15 +763,18 @@ local function openModeDropdown()
 
     modeDropdown = dd
 
-    
+    task.wait(0.1)
     closeConnection = UserInputService.InputBegan:Connect(function(input, gpe)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             if modeDropdown then
                 local mousePos = UserInputService:GetMouseLocation()
+                local guiInset = game:GetService("GuiService"):GetGuiInset()
                 local ddAbs = modeDropdown.AbsolutePosition
                 local ddSize = modeDropdown.AbsoluteSize
-                if mousePos.X < ddAbs.X or mousePos.X > ddAbs.X + ddSize.X
-                    or mousePos.Y < ddAbs.Y or mousePos.Y > ddAbs.Y + ddSize.Y then
+                local adjustedMousePos = Vector2.new(mousePos.X, mousePos.Y - guiInset.Y)
+                
+                if adjustedMousePos.X < ddAbs.X or adjustedMousePos.X > ddAbs.X + ddSize.X
+                    or adjustedMousePos.Y < ddAbs.Y or adjustedMousePos.Y > ddAbs.Y + ddSize.Y then
                     closeDropdown()
                 end
             else
@@ -857,17 +860,17 @@ end
 
                 local Title = Instance.new("TextLabel")
                 Title.Parent = SliderFrame; Title.BackgroundTransparency = 1
-                Title.Size = UDim2.new(1, 0, 0, 14); Title.Font = Enum.Font.Highway
-                Title.Text = name; Title.TextColor3 = Colors.Text; Title.TextSize = 10
+                Title.Size = UDim2.new(1, 0, 0, 14); Title.FontFace = CustomFont
+                Title.Text = name; Title.TextColor3 = Colors.Text; Title.TextSize = 12
                 Title.TextXAlignment = Enum.TextXAlignment.Left
 
                 local Outline = Instance.new("Frame")
-                Outline.Parent = SliderFrame; Outline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+                Outline.Parent = SliderFrame; Outline.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
                 Outline.BorderSizePixel = 0; Outline.Position = UDim2.new(0, 0, 0, 15)
                 Outline.Size = UDim2.new(1, 0, 0, 7)
 
                 local BG = Instance.new("Frame")
-                BG.Parent = Outline; BG.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+                BG.Parent = Outline; BG.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
                 BG.BorderSizePixel = 0; BG.Position = UDim2.new(0, 1, 0, 1)
                 BG.Size = UDim2.new(1, -2, 1, -2)
 
@@ -882,9 +885,16 @@ end
                 local ValueDisplay = Instance.new("TextLabel")
                 ValueDisplay.Parent = Fill; ValueDisplay.BackgroundTransparency = 1
                 ValueDisplay.Position = UDim2.new(1, 0, 0.5, 1); ValueDisplay.Size = UDim2.new(0, 2, 1, 0)
-                ValueDisplay.Font = Enum.Font.ArialBold; ValueDisplay.Text = tostring(value)
-                ValueDisplay.TextColor3 = Color3.fromRGB(255, 255, 255); ValueDisplay.TextSize = 10
-                ValueDisplay.TextStrokeTransparency = 0.1; ValueDisplay.TextXAlignment = Enum.TextXAlignment.Center
+                ValueDisplay.FontFace = CustomFont; ValueDisplay.Text = tostring(value)
+                ValueDisplay.TextColor3 = Color3.fromRGB(255, 255, 255); ValueDisplay.Font = Enum.Font.GothamBold
+                ValueDisplay.TextSize = 10
+                ValueDisplay.TextStrokeTransparency = 0.3; ValueDisplay.TextXAlignment = Enum.TextXAlignment.Center
+                
+                local outline = Instance.new("UIStroke")
+outline.Color = Color3.fromRGB(25, 25, 25)   
+outline.Thickness = 0.6                     
+outline.Transparency = 0                  
+outline.Parent = ValueDisplay
 
                 local Hitbox = Instance.new("TextButton")
                 Hitbox.Parent = Outline; Hitbox.BackgroundTransparency = 1
@@ -1042,157 +1052,157 @@ end
             end
 
             function Section:CreateColorPicker(flagId, name, defaultColor, callback)
-                local color = defaultColor or Color3.new(1, 1, 1)
-                local alpha = 1
-                Library.Flags[flagId] = {R = color.R, G = color.G, B = color.B, A = alpha}
-                local isOpen = false
+    local color = defaultColor or Color3.new(1, 1, 1)
+    local alpha = 1
+    Library.Flags[flagId] = {R = color.R, G = color.G, B = color.B, A = alpha}
+    local isOpen = false
 
-                local CPFrame = Instance.new("Frame")
-                CPFrame.Parent = ElementContainer; CPFrame.BackgroundTransparency = 1
-                CPFrame.Size = UDim2.new(1, 0, 0, 16)
+    local CPFrame = Instance.new("Frame")
+    CPFrame.Parent = ElementContainer; CPFrame.BackgroundTransparency = 1
+    CPFrame.Size = UDim2.new(1, 0, 0, 16)
 
-                local Title = Instance.new("TextLabel")
-                Title.Parent = CPFrame; Title.BackgroundTransparency = 1
-                Title.Size = UDim2.new(1, -25, 1, 0); Title.Font = Enum.Font.Highway
-                Title.Text = name; Title.TextColor3 = Colors.Text; Title.TextSize = 10
-                Title.TextXAlignment = Enum.TextXAlignment.Left
+    local Title = Instance.new("TextLabel")
+    Title.Parent = CPFrame; Title.BackgroundTransparency = 1
+    Title.Size = UDim2.new(1, -25, 1, 0); Title.Font = Enum.Font.Code
+    Title.Text = name; Title.TextColor3 = Colors.Text; Title.TextSize = 10
+    Title.TextXAlignment = Enum.TextXAlignment.Left
 
-                local ColorOutline = Instance.new("Frame")
-                ColorOutline.Parent = CPFrame; ColorOutline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-                ColorOutline.BorderSizePixel = 0; ColorOutline.Position = UDim2.new(1, -20, 0, 3)
-                ColorOutline.Size = UDim2.new(0, 16, 0, 10)
+    local ColorOutline = Instance.new("Frame")
+    ColorOutline.Parent = CPFrame; ColorOutline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    ColorOutline.BorderSizePixel = 0; ColorOutline.Position = UDim2.new(1, -20, 0, 3)
+    ColorOutline.Size = UDim2.new(0, 16, 0, 10)
 
-                local ColorDisplay = Instance.new("TextButton")
-                ColorDisplay.Parent = ColorOutline; ColorDisplay.BackgroundColor3 = color
-                ColorDisplay.BorderSizePixel = 0; ColorDisplay.Position = UDim2.new(0, 1, 0, 1)
-                ColorDisplay.Size = UDim2.new(1, -2, 1, -2); ColorDisplay.Text = ""
+    local ColorDisplay = Instance.new("TextButton")
+    ColorDisplay.Parent = ColorOutline; ColorDisplay.BackgroundColor3 = color
+    ColorDisplay.BorderSizePixel = 0; ColorDisplay.Position = UDim2.new(0, 1, 0, 1)
+    ColorDisplay.Size = UDim2.new(1, -2, 1, -2); ColorDisplay.Text = ""
 
-                local PickerContainer = Instance.new("Frame")
-                PickerContainer.Parent = CPFrame; PickerContainer.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
-                PickerContainer.BorderColor3 = Color3.fromRGB(12, 12, 12); PickerContainer.BorderSizePixel = 1
-                PickerContainer.Position = UDim2.new(0, 0, 0, 20); PickerContainer.Size = UDim2.new(1, 0, 0, 150)
-                PickerContainer.Visible = false; PickerContainer.ZIndex = 15
-                
-                local SVMapOutline = Instance.new("Frame")
-                SVMapOutline.Parent = PickerContainer; SVMapOutline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-                SVMapOutline.BorderSizePixel = 0; SVMapOutline.Position = UDim2.new(0, 5, 0, 5)
-                SVMapOutline.Size = UDim2.new(1, -30, 1, -25); SVMapOutline.ZIndex = 15
+    local PickerContainer = Instance.new("Frame")
+    PickerContainer.Parent = CPFrame; PickerContainer.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
+    PickerContainer.BorderColor3 = Color3.fromRGB(12, 12, 12); PickerContainer.BorderSizePixel = 1
+    PickerContainer.Position = UDim2.new(0, 0, 0, 20); PickerContainer.Size = UDim2.new(1, 0, 0, 150)
+    PickerContainer.Visible = false; PickerContainer.ZIndex = 15
+    
+    local SVMapOutline = Instance.new("Frame")
+    SVMapOutline.Parent = PickerContainer; SVMapOutline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    SVMapOutline.BorderSizePixel = 0; SVMapOutline.Position = UDim2.new(0, 5, 0, 5)
+    SVMapOutline.Size = UDim2.new(1, -30, 1, -25); SVMapOutline.ZIndex = 15
 
-                local SVMap = Instance.new("TextButton")
-                SVMap.Parent = SVMapOutline; SVMap.BackgroundColor3 = Color3.fromHSV(0, 1, 1)
-                SVMap.BorderSizePixel = 0; SVMap.Position = UDim2.new(0, 1, 0, 1)
-                SVMap.Size = UDim2.new(1, -2, 1, -2); SVMap.Text = ""; SVMap.ZIndex = 15; SVMap.AutoButtonColor = false
-                
-                local WhiteGrad = Instance.new("UIGradient", Instance.new("Frame", SVMap))
-                WhiteGrad.Parent.Size = UDim2.new(1,0,1,0); WhiteGrad.Parent.BackgroundColor3 = Color3.new(1,1,1)
-                WhiteGrad.Parent.BorderSizePixel = 0; WhiteGrad.Parent.ZIndex = 16
-                WhiteGrad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.new(1,1,1)), ColorSequenceKeypoint.new(1, Color3.new(1,1,1))}
-                WhiteGrad.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1)}
-                
-                local BlackGrad = Instance.new("UIGradient", Instance.new("Frame", SVMap))
-                BlackGrad.Parent.Size = UDim2.new(1,0,1,0); BlackGrad.Parent.BackgroundColor3 = Color3.new(0,0,0)
-                BlackGrad.Parent.BorderSizePixel = 0; BlackGrad.Parent.ZIndex = 17
-                BlackGrad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.new(0,0,0)), ColorSequenceKeypoint.new(1, Color3.new(0,0,0))}
-                BlackGrad.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0)}
-                BlackGrad.Rotation = 90
+    local SVMap = Instance.new("TextButton")
+    SVMap.Parent = SVMapOutline; SVMap.BackgroundColor3 = Color3.fromHSV(0, 1, 1)
+    SVMap.BorderSizePixel = 0; SVMap.Position = UDim2.new(0, 1, 0, 1)
+    SVMap.Size = UDim2.new(1, -2, 1, -2); SVMap.Text = ""; SVMap.ZIndex = 15; SVMap.AutoButtonColor = false
+    
+    local WhiteGrad = Instance.new("UIGradient", Instance.new("Frame", SVMap))
+    WhiteGrad.Parent.Size = UDim2.new(1,0,1,0); WhiteGrad.Parent.BackgroundColor3 = Color3.new(1,1,1)
+    WhiteGrad.Parent.BorderSizePixel = 0; WhiteGrad.Parent.ZIndex = 16
+    WhiteGrad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.new(1,1,1)), ColorSequenceKeypoint.new(1, Color3.new(1,1,1))}
+    WhiteGrad.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1)}
+    
+    local BlackGrad = Instance.new("UIGradient", Instance.new("Frame", SVMap))
+    BlackGrad.Parent.Size = UDim2.new(1,0,1,0); BlackGrad.Parent.BackgroundColor3 = Color3.new(0,0,0)
+    BlackGrad.Parent.BorderSizePixel = 0; BlackGrad.Parent.ZIndex = 17
+    BlackGrad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.new(0,0,0)), ColorSequenceKeypoint.new(1, Color3.new(0,0,0))}
+    BlackGrad.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0)}
+    BlackGrad.Rotation = 90
 
-                local HueOutline = Instance.new("Frame")
-                HueOutline.Parent = PickerContainer; HueOutline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-                HueOutline.BorderSizePixel = 0; HueOutline.Position = UDim2.new(1, -20, 0, 5)
-                HueOutline.Size = UDim2.new(0, 15, 1, -25); HueOutline.ZIndex = 15
+    local HueOutline = Instance.new("Frame")
+    HueOutline.Parent = PickerContainer; HueOutline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    HueOutline.BorderSizePixel = 0; HueOutline.Position = UDim2.new(1, -20, 0, 5)
+    HueOutline.Size = UDim2.new(0, 15, 1, -25); HueOutline.ZIndex = 15
 
-                local HueSlider = Instance.new("TextButton")
-                HueSlider.Parent = HueOutline; HueSlider.BackgroundColor3 = Color3.new(1,1,1)
-                HueSlider.BorderSizePixel = 0; HueSlider.Position = UDim2.new(0, 1, 0, 1)
-                HueSlider.Size = UDim2.new(1, -2, 1, -2); HueSlider.Text = ""; HueSlider.ZIndex = 16
-                
-                local HueGrad = Instance.new("UIGradient", HueSlider)
-                HueGrad.Rotation = 90
-                HueGrad.Color = ColorSequence.new{
-                    ColorSequenceKeypoint.new(0, Color3.fromHSV(0,1,1)), ColorSequenceKeypoint.new(1/6, Color3.fromHSV(1/6,1,1)),
-                    ColorSequenceKeypoint.new(2/6, Color3.fromHSV(2/6,1,1)), ColorSequenceKeypoint.new(3/6, Color3.fromHSV(3/6,1,1)),
-                    ColorSequenceKeypoint.new(4/6, Color3.fromHSV(4/6,1,1)), ColorSequenceKeypoint.new(5/6, Color3.fromHSV(5/6,1,1)),
-                    ColorSequenceKeypoint.new(1, Color3.fromHSV(1,1,1))
-                }
+    local HueSlider = Instance.new("TextButton")
+    HueSlider.Parent = HueOutline; HueSlider.BackgroundColor3 = Color3.new(1,1,1)
+    HueSlider.BorderSizePixel = 0; HueSlider.Position = UDim2.new(0, 1, 0, 1)
+    HueSlider.Size = UDim2.new(1, -2, 1, -2); HueSlider.Text = ""; HueSlider.ZIndex = 16
+    
+    local HueGrad = Instance.new("UIGradient", HueSlider)
+    HueGrad.Rotation = 90
+    HueGrad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromHSV(0,1,1)), ColorSequenceKeypoint.new(1/6, Color3.fromHSV(1/6,1,1)),
+        ColorSequenceKeypoint.new(2/6, Color3.fromHSV(2/6,1,1)), ColorSequenceKeypoint.new(3/6, Color3.fromHSV(3/6,1,1)),
+        ColorSequenceKeypoint.new(4/6, Color3.fromHSV(4/6,1,1)), ColorSequenceKeypoint.new(5/6, Color3.fromHSV(5/6,1,1)),
+        ColorSequenceKeypoint.new(1, Color3.fromHSV(1,1,1))
+    }
 
-                local AlphaOutline = Instance.new("Frame")
-                AlphaOutline.Parent = PickerContainer; AlphaOutline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-                AlphaOutline.BorderSizePixel = 0; AlphaOutline.Position = UDim2.new(0, 5, 1, -15)
-                AlphaOutline.Size = UDim2.new(1, -10, 0, 10); AlphaOutline.ZIndex = 15
+    local AlphaOutline = Instance.new("Frame")
+    AlphaOutline.Parent = PickerContainer; AlphaOutline.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    AlphaOutline.BorderSizePixel = 0; AlphaOutline.Position = UDim2.new(0, 5, 1, -15)
+    AlphaOutline.Size = UDim2.new(1, -10, 0, 10); AlphaOutline.ZIndex = 15
 
-                local AlphaSlider = Instance.new("TextButton")
-                AlphaSlider.Parent = AlphaOutline; AlphaSlider.BackgroundColor3 = Color3.new(1,1,1)
-                AlphaSlider.BorderSizePixel = 0; AlphaSlider.Position = UDim2.new(0, 1, 0, 1)
-                AlphaSlider.Size = UDim2.new(1, -2, 1, -2); AlphaSlider.Text = ""; AlphaSlider.ZIndex = 16
-                
-                local AlphaGrad = Instance.new("UIGradient", AlphaSlider)
-                AlphaGrad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.new(0,0,0)), ColorSequenceKeypoint.new(1, Color3.new(1,1,1))}
+    local AlphaSlider = Instance.new("TextButton")
+    AlphaSlider.Parent = AlphaOutline; AlphaSlider.BackgroundColor3 = Color3.new(1,1,1)
+    AlphaSlider.BorderSizePixel = 0; AlphaSlider.Position = UDim2.new(0, 1, 0, 1)
+    AlphaSlider.Size = UDim2.new(1, -2, 1, -2); AlphaSlider.Text = ""; AlphaSlider.ZIndex = 16
+    
+    local AlphaGrad = Instance.new("UIGradient", AlphaSlider)
+    AlphaGrad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.new(0,0,0)), ColorSequenceKeypoint.new(1, Color3.new(1,1,1))}
 
-                local h, s, v = RGBtoHSV(color)
-                
-                local function UpdateColor()
-                    local finalColor = Color3.fromHSV(h/360, s, v)
-                    SVMap.BackgroundColor3 = Color3.fromHSV(h/360, 1, 1)
-                    ColorDisplay.BackgroundColor3 = finalColor
-                    AlphaGrad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.new(0,0,0)), ColorSequenceKeypoint.new(1, finalColor)}
-                    
-                    Library.Flags[flagId] = {R = finalColor.R, G = finalColor.G, B = finalColor.B, A = alpha}
-                    pcall(callback, finalColor, alpha)
-                end
+    local h, s, v = RGBtoHSV(color)
+    
+    local function UpdateColor()
+        local finalColor = Color3.fromHSV(h/360, s, v)
+        SVMap.BackgroundColor3 = Color3.fromHSV(h/360, 1, 1)
+        ColorDisplay.BackgroundColor3 = finalColor
+        AlphaGrad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.new(0,0,0)), ColorSequenceKeypoint.new(1, finalColor)}
+        
+        Library.Flags[flagId] = {R = finalColor.R, G = finalColor.G, B = finalColor.B, A = alpha}
+        pcall(callback, finalColor, alpha)
+    end
 
-                local dragSV, dragHue, dragAlpha = false, false, false
+    local dragSV, dragHue, dragAlpha = false, false, false
 
-                local function getSV(input)
-                    s = math.clamp((input.Position.X - SVMap.AbsolutePosition.X) / SVMap.AbsoluteSize.X, 0, 1)
-                    v = 1 - math.clamp((input.Position.Y - SVMap.AbsolutePosition.Y) / SVMap.AbsoluteSize.Y, 0, 1)
-                    UpdateColor()
-                end
+    local function getSV(input)
+        s = math.clamp((input.Position.X - SVMap.AbsolutePosition.X) / SVMap.AbsoluteSize.X, 0, 1)
+        v = 1 - math.clamp((input.Position.Y - SVMap.AbsolutePosition.Y) / SVMap.AbsoluteSize.Y, 0, 1)
+        UpdateColor()
+    end
 
-                local function getHue(input)
-                    h = (math.clamp((input.Position.Y - HueSlider.AbsolutePosition.Y) / HueSlider.AbsoluteSize.Y, 0, 1)) * 360
-                    UpdateColor()
-                end
+    local function getHue(input)
+        h = (math.clamp((input.Position.Y - HueSlider.AbsolutePosition.Y) / HueSlider.AbsoluteSize.Y, 0, 1)) * 360
+        UpdateColor()
+    end
 
-                local function getAlpha(input)
-                    alpha = math.clamp((input.Position.X - AlphaSlider.AbsolutePosition.X) / AlphaSlider.AbsoluteSize.X, 0, 1)
-                    UpdateColor()
-                end
+    local function getAlpha(input)
+        alpha = math.clamp((input.Position.X - AlphaSlider.AbsolutePosition.X) / AlphaSlider.AbsoluteSize.X, 0, 1)
+        UpdateColor()
+    end
 
-                SVMap.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragSV = true; getSV(input) end end)
-                HueSlider.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragHue = true; getHue(input) end end)
-                AlphaSlider.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragAlpha = true; getAlpha(input) end end)
-                
-                UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        dragSV, dragHue, dragAlpha = false, false, false
-                    end
-                end)
-                
-                UserInputService.InputChanged:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseMovement then
-                        if dragSV then getSV(input) end
-                        if dragHue then getHue(input) end
-                        if dragAlpha then getAlpha(input) end
-                    end
-                end)
+    SVMap.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragSV = true; getSV(input) end end)
+    HueSlider.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragHue = true; getHue(input) end end)
+    AlphaSlider.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragAlpha = true; getAlpha(input) end end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragSV, dragHue, dragAlpha = false, false, false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            if dragSV then getSV(input) end
+            if dragHue then getHue(input) end
+            if dragAlpha then getAlpha(input) end
+        end
+    end)
 
-                ColorDisplay.MouseButton1Click:Connect(function()
-                    isOpen = not isOpen
-                    PickerContainer.Visible = isOpen
-                    CPFrame.Size = UDim2.new(1, 0, 0, isOpen and 175 or 16)
-                end)
-                
-                Library.Elements[flagId] = function(val)
-                    if type(val) == "table" and val.R then
-                        local c = Color3.new(val.R, val.G, val.B)
-                        h, s, v = RGBtoHSV(c)
-                        alpha = val.A or 1
-                        UpdateColor()
-                    end
-                end
+    ColorDisplay.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        PickerContainer.Visible = isOpen
+        CPFrame.Size = UDim2.new(1, 0, 0, isOpen and 175 or 16)
+    end)
+    
+    Library.Elements[flagId] = function(val)
+        if type(val) == "table" and val.R then
+            local c = Color3.new(val.R, val.G, val.B)
+            h, s, v = RGBtoHSV(c)
+            alpha = val.A or 1
+            UpdateColor()
+        end
+    end
 
-                UpdateColor()
-            end
+    UpdateColor()
+end
 
             return Section
         end
@@ -1268,386 +1278,3 @@ sound:Play()
 --?Sec:CreateDropdown("?", "?", {"1", "2", "3", "4"}, ScriptState.?, function(v) ScriptState.? = v end)
 --?Sec:CreateColorPicker("?", "?", ScriptState.?, function(c, a) ScriptState.? = c end)
 --?Sec:CreateButton("? (?)", function(?)
-
-
-
-local MiscSpeed = TabMisc:CreateSection("C-Frame Speed", "Left")
-MiscSpeed:CreateToggle("CFrameSpeed_Enabled", "Enable", ScriptState.Misc.CFrameSpeed.Enabled, function(val)
-    ScriptState.Misc.CFrameSpeed.Enabled = val
-end)
-MiscSpeed:CreateKeybind("CFrameSpeed_Key", "Speed Key", {
-    Key = ScriptState.Misc.CFrameSpeed.Key or Enum.KeyCode.X,
-    Mode = ScriptState.Misc.CFrameSpeed.Mode or "Toggle"
-}, function(settings)
-    ScriptState.Misc.CFrameSpeed.Enabled = settings.Active
-end)
-MiscSpeed:CreateSlider("CFrameSpeed_Value", "Speed", 1, 50, ScriptState.Misc.CFrameSpeed.Speed, function(val)
-    ScriptState.Misc.CFrameSpeed.Speed = val
-end, 0.1)
-
-local AimbotLeft = TabAimbot:CreateSection("Silent Aim", "Left")
-AimbotLeft:CreateToggle("SilentAim_Enabled", "Enable Silent Aim", ScriptState.Aimbot.Enabled, function(val)
-    ScriptState.Aimbot.Enabled = val
-    ScriptState.Aimbot.SilentAim = val
-end)
-AimbotLeft:CreateToggle("FaceTarget", "Face Target", ScriptState.Aimbot.FaceTarget, function(val)
-    ScriptState.Aimbot.FaceTarget = val
-end)
-
-local AimbotRight = TabAimbot:CreateSection("Settings", "Right")
-AimbotRight:CreateToggle("TeamCheck", "Team Check", ScriptState.Aimbot.TeamCheck, function(val)
-    ScriptState.Aimbot.TeamCheck = val
-end)
-AimbotRight:CreateToggle("VisibleCheck", "Visible Check", ScriptState.Aimbot.WallCheck, function(val)
-    ScriptState.Aimbot.WallCheck = val
-end)
-
-AimbotRight:CreateKeybind("AutoShoot", "Auto Shoot", {
-    Key = ScriptState.Aimbot.AutoShootKey or Enum.KeyCode.None,
-    Mode = ScriptState.Aimbot.AutoShootMode or "Toggle"
-}, function(settings)
-    ScriptState.Aimbot.AutoShootActive = settings.Active
-    ScriptState.Aimbot.AutoShootKey = settings.Key
-    ScriptState.Aimbot.AutoShootMode = settings.Mode
-end)
-
-AimbotRight:CreateSlider("Hitchance", "Hitchance", 0, 100, ScriptState.Aimbot.Hitchance, function(val)
-    ScriptState.Aimbot.Hitchance = val
-end, 1)
-
-local VisualESP = TabVisuals:CreateSection("ESP", "Left")
-VisualESP:CreateToggle("TargetESP", "Target ESP", ScriptState.Visuals.TargetESP, function(val)
-    ScriptState.Visuals.TargetESP = val
-ESPSec:CreateButton("mewo (mewo)")
-end)
-
-
-local CurrentTarget = nil
-local CurrentHitPart = nil
-
-local PriorityParts = {"Head", "HumanoidRootPart", "Torso", "UpperTorso", "LowerTorso"}
-local MaxRange = 9999
-
-
-local function IsAlive(plr)
-    if plr and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
-        return true
-    end
-    return false
-end
-
-local function GetTargetPosition(part)
-    return part and part.Position or Vector3.new(0,0,0)
-end
-
-local function CheckVisibility(origin, targetPart)
-    if not ScriptState.Aimbot.WallCheck then return true end
-    local direction = targetPart.Position - origin
-    local rayParams = RaycastParams.new()
-    rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
-    rayParams.FilterType = Enum.RaycastFilterType.Exclude
-    rayParams.IgnoreWater = true
-    local result = Workspace:Raycast(origin, direction, rayParams)
-    if result and result.Instance:IsDescendantOf(targetPart.Parent) then return true end
-    if result then return false end
-    return true
-end
-
-local function GetClosestTarget()
-    local closestPlr = nil
-    local shortestDistance = MaxRange
-    local bestPart = nil
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and IsAlive(plr) and IsAlive(LocalPlayer) then
-            local isTeammate = (ScriptState.Aimbot.TeamCheck and plr.Team == LocalPlayer.Team)
-            local hasForceField = plr.Character and plr.Character:FindFirstChildOfClass("ForceField")
-            if not isTeammate and not hasForceField then
-                local char = plr.Character
-                local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if not myRoot then return nil, nil end
-                local targetRoot = char:FindFirstChild("HumanoidRootPart")
-                if targetRoot then
-                    local dist = (targetRoot.Position - myRoot.Position).Magnitude
-                    if dist < shortestDistance then
-                        for _, partName in pairs(PriorityParts) do
-                            local part = char:FindFirstChild(partName)
-                            if part and CheckVisibility(Camera.CFrame.Position, part) then
-                                closestPlr = plr
-                                shortestDistance = dist
-                                bestPart = part
-                                break
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return closestPlr, bestPart
-end
-
-
-local ESPContainer = Instance.new("ScreenGui")
-ESPContainer.Name = "TargetESP"
-ESPContainer.ResetOnSpawn = false
-ESPContainer.IgnoreGuiInset = true
-pcall(function() ESPContainer.Parent = (gethui and gethui()) or CoreGui end)
-if not ESPContainer.Parent then
-    local playerGui = LocalPlayer:FindFirstChild("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
-    if playerGui then ESPContainer.Parent = playerGui end
-end
-
-local ESPData = {
-    TextLabel = nil,
-    CornerBoxFrames = {},
-    LastModel = nil
-}
-
-local function ClearESP()
-    if ESPData.TextLabel then
-        ESPData.TextLabel:Destroy()
-        ESPData.TextLabel = nil
-    end
-    for _, f in ipairs(ESPData.CornerBoxFrames) do
-        f:Destroy()
-    end
-    ESPData.CornerBoxFrames = {}
-    ESPData.LastModel = nil
-end
-
-local function CreateCornerFrame(color)
-    local f = Instance.new("Frame")
-    f.BackgroundColor3 = color or Color3.fromRGB(255, 0, 0)
-    f.BorderSizePixel = 0
-    f.Parent = ESPContainer
-    return f
-end
-
-local function UpdateTargetESP(model)
-    if not model or not ScriptState.Visuals.TargetESP then
-        ClearESP()
-        return
-    end
-
-    local head = model:FindFirstChild("Head") or model:FindFirstChild("HumanoidRootPart")
-    if not head then
-        ClearESP()
-        return
-    end
-
-
-    if ESPData.LastModel ~= model then
-        ClearESP()
-        ESPData.LastModel = model
-    end
-
-
-    if not ESPData.TextLabel then
-        local billboard = Instance.new("BillboardGui")
-        billboard.Adornee = head
-        billboard.Size = UDim2.new(0, 40, 0, 40)
-        billboard.StudsOffsetWorldSpace = Vector3.new(0, 2, 0)
-        billboard.AlwaysOnTop = true
-        billboard.Parent = head
-
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.GothamBold
-        label.TextSize = 24
-        label.TextColor3 = Color3.fromRGB(255, 0, 0)
-        label.Text = "X"
-        label.TextStrokeTransparency = 0
-        label.Parent = billboard
-
-        ESPData.TextLabel = billboard
-    end
-
-
-    if #ESPData.CornerBoxFrames == 0 then
-        for _ = 1, 8 do
-            local f = CreateCornerFrame(Color3.fromRGB(255, 0, 0))
-            table.insert(ESPData.CornerBoxFrames, f)
-        end
-    end
-
-    local cf, size = model:GetBoundingBox()
-    local corners = {
-        (cf * CFrame.new(-size.X/2, -size.Y/2, -size.Z/2)).Position,
-        (cf * CFrame.new( size.X/2, -size.Y/2, -size.Z/2)).Position,
-        (cf * CFrame.new(-size.X/2, -size.Y/2,  size.Z/2)).Position,
-        (cf * CFrame.new( size.X/2, -size.Y/2,  size.Z/2)).Position,
-        (cf * CFrame.new(-size.X/2,  size.Y/2, -size.Z/2)).Position,
-        (cf * CFrame.new( size.X/2,  size.Y/2, -size.Z/2)).Position,
-        (cf * CFrame.new(-size.X/2,  size.Y/2,  size.Z/2)).Position,
-        (cf * CFrame.new( size.X/2,  size.Y/2,  size.Z/2)).Position,
-    }
-
-    local screenCorners = {}
-    for _, worldPos in ipairs(corners) do
-        local screenPos, onScreen = Camera:WorldToViewportPoint(worldPos)
-        screenCorners[#screenCorners+1] = {pos = Vector2.new(screenPos.X, screenPos.Y), onScreen = onScreen}
-    end
-
-    local minX, minY = math.huge, math.huge
-    local maxX, maxY = -math.huge, -math.huge
-    for _, sc in ipairs(screenCorners) do
-        if sc.onScreen then
-            minX = math.min(minX, sc.pos.X)
-            minY = math.min(minY, sc.pos.Y)
-            maxX = math.max(maxX, sc.pos.X)
-            maxY = math.max(maxY, sc.pos.Y)
-        end
-    end
-
-    if minX == math.huge then
-        for _, f in ipairs(ESPData.CornerBoxFrames) do f.Visible = false end
-        return
-    end
-
-    local cornerLen = 10
-    local thickness = 2
-
-    ESPData.CornerBoxFrames[1].Size = UDim2.new(0, cornerLen, 0, thickness)
-    ESPData.CornerBoxFrames[1].Position = UDim2.new(0, minX, 0, minY)
-    ESPData.CornerBoxFrames[1].Visible = true
-    ESPData.CornerBoxFrames[2].Size = UDim2.new(0, thickness, 0, cornerLen)
-    ESPData.CornerBoxFrames[2].Position = UDim2.new(0, minX, 0, minY)
-    ESPData.CornerBoxFrames[2].Visible = true
-
-    ESPData.CornerBoxFrames[3].Size = UDim2.new(0, cornerLen, 0, thickness)
-    ESPData.CornerBoxFrames[3].Position = UDim2.new(0, maxX - cornerLen, 0, minY)
-    ESPData.CornerBoxFrames[3].Visible = true
-    ESPData.CornerBoxFrames[4].Size = UDim2.new(0, thickness, 0, cornerLen)
-    ESPData.CornerBoxFrames[4].Position = UDim2.new(0, maxX, 0, minY)
-    ESPData.CornerBoxFrames[4].Visible = true
-
-    ESPData.CornerBoxFrames[5].Size = UDim2.new(0, cornerLen, 0, thickness)
-    ESPData.CornerBoxFrames[5].Position = UDim2.new(0, minX, 0, maxY - thickness)
-    ESPData.CornerBoxFrames[5].Visible = true
-    ESPData.CornerBoxFrames[6].Size = UDim2.new(0, thickness, 0, cornerLen)
-    ESPData.CornerBoxFrames[6].Position = UDim2.new(0, minX, 0, maxY - cornerLen)
-    ESPData.CornerBoxFrames[6].Visible = true
-
-    ESPData.CornerBoxFrames[7].Size = UDim2.new(0, cornerLen, 0, thickness)
-    ESPData.CornerBoxFrames[7].Position = UDim2.new(0, maxX - cornerLen, 0, maxY - thickness)
-    ESPData.CornerBoxFrames[7].Visible = true
-    ESPData.CornerBoxFrames[8].Size = UDim2.new(0, thickness, 0, cornerLen)
-    ESPData.CornerBoxFrames[8].Position = UDim2.new(0, maxX, 0, maxY - cornerLen)
-    ESPData.CornerBoxFrames[8].Visible = true
-end
-
-
-local hookmetamethod = hookmetamethod or function(...) return ... end
-local newcclosure = newcclosure or function(f) return f end
-local checkcaller = checkcaller or function() return false end
-local getnamecallmethod = getnamecallmethod or function() return "" end
-local mouse1click = mouse1click or function() end
-
-local OldNameCall = nil
-OldNameCall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-    local Args = {...}
-    local Method = getnamecallmethod()
-
-    if ScriptState.Aimbot.Enabled and CurrentHitPart and not checkcaller() then
-        local Chance = math.random(1, 100) <= ScriptState.Aimbot.Hitchance
-        if Chance then
-            local hitPos = GetTargetPosition(CurrentHitPart)
-            if Method == "Raycast" and (self == Workspace or self == workspace) then
-                if typeof(Args[1]) == "Vector3" and typeof(Args[2]) == "Vector3" then
-                    Args[2] = (hitPos - Args[1]).Unit * 10000
-                    return OldNameCall(self, unpack(Args))
-                end
-            end
-            if (Method == "FindPartOnRay" or Method == "FindPartOnRayWithWhitelist" or Method == "FindPartOnRayWithIgnoreList") and (self == Workspace or self == workspace) then
-                if typeof(Args[1]) == "Ray" then
-                    Args[1] = Ray.new(Args[1].Origin, (hitPos - Args[1].Origin).Unit * 10000)
-                    return OldNameCall(self, unpack(Args))
-                end
-            end
-            if (self == Mouse or tostring(self) == "Mouse") then
-                if Method == "Hit" then return CFrame.new(hitPos)
-                elseif Method == "Target" then return CurrentHitPart end
-            end
-            if Method == "FireServer" and ScriptState.Aimbot.RemoteDetection then 
-                for i, arg in pairs(Args) do
-                    if typeof(arg) == "Vector3" then
-                        if (arg - Camera.CFrame.Position).Magnitude > 5 then Args[i] = hitPos end
-                    elseif typeof(arg) == "CFrame" then
-                        if (arg.Position - Camera.CFrame.Position).Magnitude > 5 then Args[i] = CFrame.new(hitPos) end
-                    end
-                end
-                return OldNameCall(self, unpack(Args))
-            end
-        end
-    end
-    return OldNameCall(self, ...)
-end))
-
-local OldIndex = nil
-OldIndex = hookmetamethod(game, "__index", newcclosure(function(self, Key)
-    if not checkcaller() and ScriptState.Aimbot.Enabled and CurrentHitPart then
-        if (self == Mouse or tostring(self) == "Mouse") then
-            if Key == "Hit" then return CFrame.new(GetTargetPosition(CurrentHitPart))
-            elseif Key == "Target" then return CurrentHitPart end
-        end
-    end
-    return OldIndex(self, Key)
-end))
-
-
-RunService.Heartbeat:Connect(function(dt)
-    if ScriptState.Misc.CFrameSpeed.Enabled then
-        local char = LocalPlayer.Character
-        if char then
-            local root = char:FindFirstChild("HumanoidRootPart")
-            local hum = char:FindFirstChild("Humanoid")
-            if root and hum then
-                local moveDir = hum.MoveDirection
-                if moveDir.Magnitude > 0 then
-                    root.CFrame = root.CFrame + (moveDir * ScriptState.Misc.CFrameSpeed.Speed * dt)
-                end
-            end
-        end
-    end
-
-
-    if not ScriptState.Aimbot.Enabled then
-        CurrentTarget = nil
-        CurrentHitPart = nil
-        ClearESP()
-        return
-    end
-
-    local target, hitPart = GetClosestTarget()
-    CurrentTarget = target
-    CurrentHitPart = hitPart
-
-    if target and target.Character then
-        UpdateTargetESP(target.Character)
-    else
-        ClearESP()
-    end
-
-    if CurrentTarget and CurrentHitPart then
-        local hitPos = GetTargetPosition(CurrentHitPart)
-
-
-        if ScriptState.Aimbot.FaceTarget then
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local root = char.HumanoidRootPart
-                root.CFrame = CFrame.new(root.Position, Vector3.new(hitPos.X, root.Position.Y, hitPos.Z))
-            end
-        end
-
-
-        if ScriptState.Aimbot.AutoShootActive then
-            pcall(function() mouse1click() end)
-            if VirtualInputManager then
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-            end
-        end
-    end
-end)
