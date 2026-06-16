@@ -22,6 +22,20 @@ local function rgbToHex(c)
     return string.format("%02X%02X%02X", math.floor(c.R * 255), math.floor(c.G * 255), math.floor(c.B * 255))
 end
 
+
+local FontAsset = getcustomasset("VerdanaBd.ttf")
+local fontMetadata = {
+name = "VerdanaBd",
+faces = {{
+name = "Regular",
+weight = 400,
+style = "normal",
+assetId = FontAsset
+}}
+}
+writefile("VerdanaBd.json", HttpService:JSONEncode(fontMetadaa))
+local CustomFont = Font.new(getcustomasset("VerdanaBd.json"), Enum.FontWeight.Regular)
+
 --###############
 -- __watermark P2
 --###############
@@ -525,7 +539,7 @@ InnerBorder.Parent = MainFrame
 InnerBorder.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 InnerBorder.BorderSizePixel = 0
 InnerBorder.Position = UDim2.new(0, 1, 0, 1)
-InnerBorder.Size = UDim2.new(1.003, -2, 1.003, -2)
+InnerBorder.Size = UDim2.new(1, -2, 1, -2)
 
 local InnerFrame = Instance.new("Frame")
 InnerFrame.Parent = MainFrame
