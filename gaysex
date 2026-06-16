@@ -1934,3 +1934,6 @@ local assetId = getcustomasset("start.mp3")
 local sound = Instance.new("Sound", workspace)
 sound.SoundId = assetId
 sound:Play()
+
+
+return Library
