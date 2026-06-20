@@ -420,18 +420,15 @@ function library:window(properties)
 		BackgroundColor3 = Color3.fromRGB(40, 40, 40),
 	})
 
-local TextService = game:GetService("TextService")
-local text_width = TextService:GetTextSize(cfg.name, 12, library.font, Vector2.new(math.huge, math.huge)).X
-
-local inline1 = library:create("Frame", {
-    Parent = __holder,
-    Name = "",
-    Active = true,
-    Draggable = true,
-    BorderColor3 = Color3.fromRGB(0, 0, 0),
-    Size = UDim2.new(0, ((#animated_text / 2) * 8) + 20, 0, 40),
-    BackgroundColor3 = Color3.fromRGB(40, 40, 40),
-})
+	local inline1 = library:create("Frame", {
+		Parent = __holder,
+		Name = "",
+		Active = true,
+		Draggable = true,
+		BorderColor3 = Color3.fromRGB(0, 0, 0),
+		Size = UDim2.new(0, ((#animated_text / 2) * 5) + 13, 0, 40),
+		BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+	})
 
 	local accent_line = library:create("Frame", {
 		Parent = inline1,
