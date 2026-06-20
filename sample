@@ -425,10 +425,11 @@ local text_width = TextService:GetTextSize(cfg.name, 12, library.font, Vector2.n
 
 local inline1 = library:create("Frame", {
     Parent = __holder,
+    Name = "",
     Active = true,
     Draggable = true,
     BorderColor3 = Color3.fromRGB(0, 0, 0),
-    Size = UDim2.new(0, text_width + 29, 0, 40), -- +29 = отступы слева/справа
+    Size = UDim2.new(0, ((#animated_text / 2) * 8) + 20, 0, 40),
     BackgroundColor3 = Color3.fromRGB(40, 40, 40),
 })
 
