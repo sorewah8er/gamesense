@@ -1,0 +1,1062 @@
+local SupremacyUI = {}
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+local Stats = game:GetService("Stats")
+
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer and LocalPlayer:GetMouse()
+
+local function parentGui()
+local ok, result = pcall(function() return gethui and gethui() end)
+if ok and result then return result end
+local playerGui = LocalPlayer and LocalPlayer:FindFirstChildOfClass("PlayerGui")
+return playerGui or CoreGui
+end
+
+local function rgb(r, g, b) return Color3.fromRGB(r, g, b) end
+local function tryDecode(decoder, data)
+if type(decoder) ~= "function" then return nil end
+local ok, result = pcall(decoder, data)
+if ok and type(result) == "string" then return result end
+return nil
+end
+
+local function decodeBase64(data)
+return tryDecode(crypt and crypt.base64 and crypt.base64.decode, data)
+or tryDecode(syn and syn.crypt and syn.crypt.base64 and syn.crypt.base64.decode, data)
+or tryDecode(base64 and base64.decode, data)
+or tryDecode(base64_decode, data)
+or tryDecode(crypt and crypt.base64_decode, data)
+end
+
+local function ensureFolder(pathName)
+if not makefolder then return end
+local exists = false
+if isfolder then
+local ok, result = pcall(isfolder, pathName)
+exists = ok and result
+end
+if not exists then pcall(makefolder, pathName) end
+end
+
+local function loadBitmapFontAsset(name, data)
+if not writefile or not getcustomasset or not Font or not Font.new then return nil end
+local decoded = decodeBase64(data)
+if not decoded then return nil end
+
+local rootFolder = "supremacy"
+local fontFolder = rootFolder .. "/fonts"
+ensureFolder(rootFolder)
+ensureFolder(fontFolder)
+
+local fontPath = fontFolder .. "/" .. name .. ".ttf"
+local fontMetaPath = fontFolder .. "/" .. name .. ".font"
+local okWrite = pcall(function()
+    writefile(fontPath, decoded)
+    writefile(fontMetaPath, HttpService:JSONEncode({
+        name = name,
+        faces = {{ name = "Regular", weight = 400, style = "normal", assetId = getcustomasset(fontPath) }}
+    }))
+end)
+if not okWrite then return nil end
+local okAsset, asset = pcall(getcustomasset, fontMetaPath)
+if not okAsset then return nil end
+local okFont, fontFace = pcall(function()
+    return Font.new(asset, Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+end)
+return okFont and fontFace or nil
+
+
+end
+
+local function loadRemoteFontAsset(name, url)
+if not writefile or not getcustomasset or not Font or not Font.new then return nil end
+local body
+local okHttp, httpResult = pcall(function() if game.HttpGet then return game:HttpGet(url) end end)
+if okHttp and type(httpResult) == "string" and #httpResult > 4 then
+body = httpResult
+else
+local requester = request or http_request or (syn and syn.request)
+if type(requester) == "function" then
+local okRequest, response = pcall(requester, { Url = url, Method = "GET" })
+if okRequest and response and type(response.Body) == "string" then body = response.Body end
+end
+end
+
+if not body then return nil end
+
+local rootFolder = "supremacy"
+local fontFolder = rootFolder .. "/fonts"
+ensureFolder(rootFolder)
+ensureFolder(fontFolder)
+
+local fontPath = fontFolder .. "/" .. name .. ".ttf"
+local fontMetaPath = fontFolder .. "/" .. name .. ".font"
+pcall(function()
+    writefile(fontPath, body)
+    writefile(fontMetaPath, HttpService:JSONEncode({
+        name = name,
+        faces = {{ name = "Regular", weight = 400, style = "normal", assetId = getcustomasset(fontPath) }}
+    }))
+end)
+local okAsset, asset = pcall(getcustomasset, fontMetaPath)
+if not okAsset then return nil end
+local okFont, fontFace = pcall(function() return Font.new(asset, Enum.FontWeight.Regular, Enum.FontStyle.Normal) end)
+return okFont and fontFace or nil
+
+
+end
+
+local SupremacyDefaultUIFontFace = loadRemoteFontAsset("WineTahoma", "https://raw.githubusercontent.com/wine-mirror/wine/master/fonts/tahoma.ttf")
+local SupremacyUIFontEnum = Enum.Font.Code
+local SupremacyFontMode = "default"
+local SupremacyFontRegistry = {}
+
+local function loadLibFont(stem, url)
+if not writefile or not getcustomasset or not Font or not Font.new then return nil end
+local ok, body = pcall(game.HttpGet, game, url)
+if not ok or type(body) ~= "string" or #body < 4 then return nil end
+local fontPath = "supremacy/fonts/" .. stem .. ".ttf"
+local fontMetaPath = "supremacy/fonts/" .. stem .. ".font"
+ensureFolder("supremacy")
+ensureFolder("supremacy")
+pcall(function()
+writefile(fontPath, body)
+writefile(fontMetaPath, HttpService:JSONEncode({
+name = stem,
+faces = {{ name = "Regular", weight = 400, style = "normal", assetId = getcustomasset(fontPath) }}
+}))
+end)
+local okAsset, asset = pcall(getcustomasset, fontMetaPath)
+if not okAsset then return nil end
+local okFont, face = pcall(Font.new, asset, Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+return okFont and face or nil
+end
+
+local _BASE_FONT_URL = "https://github.com/i77lhm/storage/raw/refs/heads/main/fonts/"
+local SupremacyFontFaces = {
+["default"]       = SupremacyDefaultUIFontFace,
+["proggyclean"]   = loadLibFont("proggyclean",   _BASE_FONT_URL .. "ProggyClean.ttf"),
+["tahoma"]        = loadLibFont("tahoma",        _BASE_FONT_URL .. "fs-tahoma-8px.ttf"),
+["smallestpixel"] = loadLibFont("smallestpixel", _BASE_FONT_URL .. "smallest_pixel-7.ttf"),
+["proggytiny"]    = loadLibFont("proggytiny",    _BASE_FONT_URL .. "ProggyTiny.ttf"),
+["tahoma bold"]   = loadLibFont("tahomabold",    _BASE_FONT_URL .. "tahoma_bold.ttf"),
+}
+
+local _VALID_FONT_OPTION = {
+["default"] = true, ["proggyclean"] = true, ["tahoma"] = true,
+["smallestpixel"] = true, ["proggytiny"] = true,
+["tahoma bold"] = true,
+}
+local SupremacyFontSize = 12
+
+local function applyMenuFont(inst, baseFont)
+local targetFace = SupremacyFontFaces[SupremacyFontMode] or SupremacyDefaultUIFontFace
+if targetFace then
+local ok = pcall(function() inst.FontFace = targetFace end)
+if ok then
+inst.TextSize = SupremacyFontSize
+return
+end
+end
+inst.Font = baseFont or SupremacyUIFontEnum
+inst.TextSize = SupremacyFontSize
+end
+
+local function registerMenuText(inst, baseFont)
+SupremacyFontRegistry[#SupremacyFontRegistry + 1] = { Instance = inst, BaseFont = baseFont or SupremacyUIFontEnum }
+applyMenuFont(inst, baseFont)
+end
+
+local function setMenuFontSize(size)
+SupremacyFontSize = math.clamp(math.floor(size + 0.5), 1, 18)
+for index = #SupremacyFontRegistry, 1, -1 do
+local entry = SupremacyFontRegistry[index]
+if entry.Instance and entry.Instance.Parent then
+entry.Instance.TextSize = SupremacyFontSize
+else
+table.remove(SupremacyFontRegistry, index)
+end
+end
+end
+
+local function setMenuFontMode(mode)
+SupremacyFontMode = _VALID_FONT_OPTION[mode] and mode or "default"
+for index = #SupremacyFontRegistry, 1, -1 do
+local entry = SupremacyFontRegistry[index]
+if entry.Instance and entry.Instance.Parent then
+applyMenuFont(entry.Instance, entry.BaseFont)
+else
+table.remove(SupremacyFontRegistry, index)
+end
+end
+end
+
+local function new(className, props)
+local inst = Instance.new(className)
+for key, value in pairs(props or {}) do inst[key] = value end
+
+if inst:IsA("TextLabel") or inst:IsA("TextButton") or inst:IsA("TextBox") then
+    if (props or {}).TextSize == nil then inst.TextSize = 12 end
+    registerMenuText(inst, (props or {}).Font or SupremacyUIFontEnum)
+    
+    if not inst:IsA("TextBox") and (props or {}).TextStrokeTransparency == nil then
+        inst.TextStrokeColor3 = Color3.new(0, 0, 0)
+        inst.TextStrokeTransparency = 0.65
+    end
+end
+return inst
+
+
+end
+
+local function addStroke(parent, color, thickness, transparency)
+return new("UIStroke", {
+Parent = parent, Color = color, Thickness = thickness or 1,
+Transparency = transparency or 0, ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+})
+end
+
+local function addList(parent, padding)
+return new("UIListLayout", {
+Parent = parent, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, padding or 6)
+})
+end
+
+local function bindAutoHeight(frame, layout, extra)
+local function update() frame.Size = UDim2.new(frame.Size.X.Scale, frame.Size.X.Offset, 0, layout.AbsoluteContentSize.Y + (extra or 0)) end
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(update)
+task.defer(update)
+end
+
+local function text(parent, value, pos, size, color, z)
+return new("TextLabel", {
+Parent = parent, Position = pos or UDim2.new(), Size = size or UDim2.new(1, 0, 0, 14),
+BackgroundTransparency = 1, BorderSizePixel = 0, Text = value or "", TextColor3 = color,
+TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Center,
+TextSize = 12, Font = Enum.Font.Code, ZIndex = z or parent.ZIndex + 1
+})
+end
+
+local function buttonOverlay(parent, z)
+return new("TextButton", {
+Parent = parent, Position = UDim2.new(), Size = UDim2.new(1, 0, 1, 0),
+BackgroundTransparency = 1, BorderSizePixel = 0, Text = "",
+AutoButtonColor = false, ZIndex = z or parent.ZIndex + 5
+})
+end
+
+local function formatValue(value, precision, suffix)
+local fmt = "%." .. tostring(precision or 0) .. "f"
+return string.format(fmt, value) .. (suffix or "")
+end
+
+local function roundStep(value, step)
+step = step or 1
+return math.floor((value / step) + 0.5) * step
+end
+
+local function safeCallback(callback, ...)
+if callback then task.spawn(callback, ...) end
+end
+
+local function MakeDraggable(dragArea, targetObject)
+local dragToggle, dragInput, dragStart, dragPos
+dragArea.InputBegan:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 then
+dragToggle = true; dragStart = input.Position; dragPos = targetObject.Position
+end
+end)
+dragArea.InputEnded:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 then dragToggle = false end
+end)
+UserInputService.InputChanged:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+end)
+RunService.RenderStepped:Connect(function()
+if dragToggle and dragInput then
+local delta = dragInput.Position - dragStart
+TweenService:Create(targetObject, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+Position = UDim2.new(dragPos.X.Scale, dragPos.X.Offset + delta.X, dragPos.Y.Scale, dragPos.Y.Offset + delta.Y)
+}):Play()
+end
+end)
+end
+
+function SupremacyUI.new(options)
+options = options or {}
+
+local Library = {
+    Flags = {},
+    Windows = {},
+    ActiveKeybinds = {},
+    TransparencyRegistry = {},
+    NotificationSettings = {
+        Duration = 3,
+        Transparency = options.MenuTransparency or 0.05
+    },
+    Theme = {
+        Accent = options.Accent or rgb(179, 0, 45),
+        Background = rgb(12, 12, 12), Panel = rgb(17, 17, 17), Field = rgb(41, 41, 41),
+        FieldTop = rgb(75, 75, 75), FieldBottom = rgb(50, 50, 50), Border = rgb(0, 0, 0),
+        BorderDark = rgb(40, 40, 40), BorderSoft = rgb(48, 48, 48), BorderLight = rgb(60, 60, 60),
+        Text = rgb(205, 205, 205), Muted = rgb(152, 152, 152), White = rgb(255, 255, 255),
+        MenuTransparency = options.MenuTransparency or 0.05
+    },
+    Parent = options.Parent or parentGui()
+}
+
+local theme = Library.Theme
+
+local NotifGui = Instance.new("ScreenGui", Library.Parent)
+NotifGui.Name = "Supremacy_Notifications"
+NotifGui.IgnoreGuiInset = true
+
+local NotifLayout = new("Frame", {
+    Parent = NotifGui, Size = UDim2.new(0, 250, 1, -40), Position = UDim2.new(1, -270, 0, 20),
+    BackgroundTransparency = 1
+})
+local notifList = addList(NotifLayout, 6)
+notifList.VerticalAlignment = Enum.VerticalAlignment.Bottom
+Library.NotifLayout = NotifLayout
+
+local function registerTransparency(inst, isStroke)
+    table.insert(Library.TransparencyRegistry, { Instance = inst, IsStroke = isStroke })
+    if isStroke then inst.Transparency = theme.MenuTransparency
+    else inst.BackgroundTransparency = theme.MenuTransparency end
+end
+
+function Library:SetMenuTransparency(value)
+    theme.MenuTransparency = value
+    for _, entry in ipairs(self.TransparencyRegistry) do
+        if entry.Instance and entry.Instance.Parent then
+            if entry.IsStroke then entry.Instance.Transparency = value else entry.Instance.BackgroundTransparency = value end
+        end
+    end
+end
+
+
+local function applySupremacyBorders(parent)
+local borderColors = { rgb(60, 60, 60), rgb(40, 40, 40), rgb(40, 40, 40), rgb(40, 40, 40), rgb(60, 60, 60), rgb(31, 31, 31) }
+local totalThickness = 0
+for _, color in ipairs(borderColors) do
+local borderFrame = new("Frame", {
+Parent = parent, Size = UDim2.new(1, (totalThickness - 1) * 2 + 2, 1, (totalThickness - 1) * 2 + 2),
+Position = UDim2.new(0, -(totalThickness - 1) - 1, 0, -(totalThickness - 1) - 1),
+BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = parent.ZIndex + 1
+})
+local stroke = new("UIStroke", { Parent = borderFrame, LineJoinMode = Enum.LineJoinMode.Miter, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = color, Thickness = 1 })
+registerTransparency(stroke, true)
+totalThickness = totalThickness + 1
+end
+end
+
+local function framed(parent, props)
+    local outer = new("Frame", { Parent = parent, Position = props.Position or UDim2.new(), Size = props.Size or UDim2.new(), BackgroundColor3 = theme.Panel, BorderSizePixel = 0, ZIndex = props.ZIndex or parent.ZIndex + 1, ClipsDescendants = props.ClipsDescendants or false })
+    registerTransparency(outer, false); local outerStroke = addStroke(outer, theme.Border, 1); registerTransparency(outerStroke, true)
+    local inner = new("Frame", { Parent = outer, Position = UDim2.new(0, 1, 0, 1), Size = UDim2.new(1, -2, 1, -2), BackgroundColor3 = props.BackgroundColor3 or theme.Panel, BorderSizePixel = 0, ZIndex = outer.ZIndex + 1, ClipsDescendants = props.ClipsDescendants or false })
+    registerTransparency(inner, false); local innerStroke = addStroke(inner, theme.BorderSoft, 1); registerTransparency(innerStroke, true)
+    return outer, inner
+end
+
+local function field(parent, pos, size, z, useGradient)
+    local outer = new("Frame", { Parent = parent, Position = pos, Size = size, BackgroundColor3 = theme.Border, BorderSizePixel = 0, ZIndex = z or parent.ZIndex + 2 })
+    local inner = new("Frame", { Parent = outer, Position = UDim2.new(0, 1, 0, 1), Size = UDim2.new(1, -2, 1, -2), BackgroundColor3 = theme.Field, BorderSizePixel = 0, ZIndex = outer.ZIndex + 1 })
+    local gradient
+    if useGradient then gradient = new("UIGradient", { Parent = inner, Rotation = 90, Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, theme.FieldTop), ColorSequenceKeypoint.new(1, theme.FieldBottom) }) }) end
+    return outer, inner, gradient
+end
+
+local function dropdownArrow(parent, z)
+    local holder = new("Frame", { Parent = parent, Position = UDim2.new(1, -18, 0, 0), Size = UDim2.new(0, 18, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = z or parent.ZIndex + 2 })
+    local pixels = {}
+    for i = 1, 9 do pixels[i] = new("Frame", { Parent = holder, Size = UDim2.new(0, 1, 0, 1), BackgroundColor3 = theme.Muted, BorderSizePixel = 0, ZIndex = holder.ZIndex + 1 }) end
+    local down = { { 4, 8 }, { 5, 8 }, { 6, 8 }, { 7, 8 }, { 8, 8 }, { 5, 9 }, { 6, 9 }, { 7, 9 }, { 6, 10 } }
+    local up = { { 6, 8 }, { 5, 9 }, { 6, 9 }, { 7, 9 }, { 4, 10 }, { 5, 10 }, { 6, 10 }, { 7, 10 }, { 8, 10 } }
+    local arrow = {}
+    function arrow:Set(open) for index, point in ipairs(open and up or down) do pixels[index].Position = UDim2.new(0, point[1], 0, point[2]) end end
+    arrow.Frame = holder; arrow:Set(false)
+    return arrow
+end
+
+local function insideAbsolute(gui, position)
+    local abs = gui.AbsolutePosition; local size = gui.AbsoluteSize
+    return position.X >= abs.X and position.X <= abs.X + size.X and position.Y >= abs.Y and position.Y <= abs.Y + size.Y
+end
+
+local function flagObject(flag, object) if flag then Library.Flags[flag] = object end end
+
+
+local WindowMethods, TabMethods, SectionMethods, ControlMethods = {}, {}, {}, {}
+
+function Library:Window(params)
+    params = params or {}
+    local window = { Library = Library, Name = params.Name or "supremacy", Tabs = {}, ActiveTab = nil, Open = params.Visible ~= false, Key = params.Bind or Enum.KeyCode.Insert }
+    local gui = new("ScreenGui", { Parent = Library.Parent, Name = (params.Name or "Supremacy") .. "_RobloxUI", ResetOnSpawn = false, IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Global })
+    local size = params.Size or UDim2.new(0, 630, 0, 550)
+    local root = new("Frame", { Parent = gui, AnchorPoint = params.AnchorPoint or Vector2.new(0, 0), Position = params.Position or UDim2.new(0, 50, 0, 50), Size = size, BackgroundColor3 = theme.Background, BorderSizePixel = 0, Visible = window.Open, ZIndex = 100 })
+
+    registerTransparency(root, false); applySupremacyBorders(root)
+    local outerCasing = root
+    local client = new("Frame", { Parent = root, Position = UDim2.new(0, 6, 0, 6), Size = UDim2.new(1, -12, 1, -12), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = root.ZIndex + 2 })
+
+    local tabsOuter, tabsInner = framed(client, { Position = UDim2.new(0, 14, 0, 14), Size = UDim2.new(0, 100, 1, -28), ZIndex = client.ZIndex + 1 })
+    local elementsOuter, elementsInner = framed(client, { Position = UDim2.new(0, 134, 0, 14), Size = UDim2.new(1, -148, 1, -28), ZIndex = client.ZIndex + 1, ClipsDescendants = false })
+
+    local tabList = addList(tabsInner, 0); tabList.HorizontalAlignment = Enum.HorizontalAlignment.Left; tabList.VerticalAlignment = Enum.VerticalAlignment.Top
+    new("UIPadding", { Parent = tabsInner, PaddingTop = UDim.new(0, 4) })
+
+    local content = new("Frame", { Parent = elementsInner, Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, 0, 1, -18), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = elementsInner.ZIndex + 1 })
+    local popupLayer = new("Frame", { Parent = elementsInner, Position = UDim2.new(), Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = elementsInner.ZIndex + 200 })
+
+    window.Gui = gui; window.Root = root; window.OuterCasing = outerCasing
+    window.TabsInner = tabsInner; window.ElementsInner = elementsInner; window.Content = content
+    window.PopupLayer = popupLayer; window.TabsOuter = tabsOuter; window.ElementsOuter = elementsOuter
+
+    local DragArea = new("Frame", {Parent = root, Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1})
+    MakeDraggable(DragArea, root)
+
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and window.Key and input.KeyCode == window.Key then window:SetOpen(not window.Open) end
+    end)
+
+    setmetatable(window, { __index = WindowMethods })
+    Library.Windows[#Library.Windows + 1] = window
+    return window
+end
+
+function WindowMethods:SetOpen(value) self.Open = value; self.Root.Visible = value end
+function WindowMethods:GetDefaultTab()
+    if self.CompatibilityTab then return self.CompatibilityTab end
+    self.CompatibilityTab = self:Tab({ Name = self.Name or "main" })
+    return self.CompatibilityTab
+end
+
+
+function WindowMethods:Tab(params)
+params = params or {}
+local tab = { Window = self, Name = params.Name or params.Title or "tab", Sections = {}, IsActive = false }
+local index = #self.Tabs + 1
+local tabButton = new("TextButton", { Parent = self.TabsInner, Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, BorderSizePixel = 0, Text = tab.Name, TextColor3 = theme.Muted, TextXAlignment = Enum.TextXAlignment.Left, TextSize = 12, Font = Enum.Font.Code, AutoButtonColor = false, LayoutOrder = index, ZIndex = self.TabsInner.ZIndex + 2 })
+new("UIPadding", { Parent = tabButton, PaddingLeft = UDim.new(0, 10) })
+local page = new("Frame", { Parent = self.Content, Position = UDim2.new(), Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, Visible = false, ZIndex = self.Content.ZIndex + 1 })
+
+    local left = new("CanvasGroup", { Parent = page, Position = UDim2.new(0, 20, 0, 18), Size = UDim2.new(0, 175, 1, -38), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = page.ZIndex + 1 })
+    local right = new("CanvasGroup", { Parent = page, Position = UDim2.new(0, 255, 0, 18), Size = UDim2.new(0, 175, 1, -38), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = page.ZIndex + 1 })
+    
+    addList(left, 4); addList(right, 4)
+    new("UIPadding", { Parent = left, PaddingRight = UDim.new(0, 4) }); new("UIPadding", { Parent = right, PaddingRight = UDim.new(0, 4) })
+    tab.Button = tabButton; tab.Page = page; tab.Left = left; tab.Right = right
+    tabButton.MouseButton1Click:Connect(function() self:SetTab(tab) end)
+    setmetatable(tab, { __index = TabMethods })
+    self.Tabs[#self.Tabs + 1] = tab
+    if not self.ActiveTab then self:SetTab(tab) end
+    return tab
+end
+
+function WindowMethods:SetTab(tab)
+    for _, other in ipairs(self.Tabs) do
+        if other == tab then continue end
+        other.IsActive = false
+        other.Page.Visible = false
+        TweenService:Create(other.Button, TweenInfo.new(0.2), {TextColor3 = theme.Muted}):Play()
+    end
+    
+    if not tab.IsActive then
+        tab.IsActive = true
+        tab.Page.Visible = true
+        
+        tab.Page.Position = UDim2.new(0, 0, 0, 15)
+        tab.Left.GroupTransparency = 1
+        tab.Right.GroupTransparency = 1
+        
+        TweenService:Create(tab.Page, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+        TweenService:Create(tab.Left, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
+        TweenService:Create(tab.Right, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
+    end
+
+    TweenService:Create(tab.Button, TweenInfo.new(0.2), {TextColor3 = theme.Accent}):Play()
+    self.ActiveTab = tab
+end
+
+
+function TabMethods:Section(params)
+params = params or {}
+local side = params.Side == "Right" and "Right" or "Left"
+local parent = self[side]
+local section = { Tab = self, Window = self.Window, Name = params.Name or "", Controls = {} }
+local container = new("Frame", { Parent = parent, Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = parent.ZIndex + 1 })
+local inner = new("Frame", { Parent = container, Position = UDim2.new(), Size = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = container.ZIndex + 1 })
+local list = addList(inner, 4); bindAutoHeight(inner, list, 0)
+local function update() container.Size = UDim2.new(1, 0, 0, list.AbsoluteContentSize.Y) end
+list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(update); task.defer(update)
+section.Container = container; section.Outer = container; section.Inner = inner; section.Layout = list
+setmetatable(section, { __index = SectionMethods })
+self.Sections[#self.Sections + 1] = section
+return section
+end
+
+local function controlBase(section, height)
+    local row = new("Frame", { Parent = section.Inner, Size = UDim2.new(1, 0, 0, height), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = section.Inner.ZIndex + 1 })
+    local control = { Section = section, Window = section.Window, Row = row }
+    setmetatable(control, { __index = ControlMethods })
+    section.Controls[#section.Controls + 1] = control
+    return control, row
+end
+
+
+function SectionMethods:Label(params)
+params = params or {}
+local control, row = controlBase(self, 11)
+control.Label = text(row, params.Text or params.Name or "label", UDim2.new(0, 20, 0, 0), UDim2.new(1, -20, 1, 0), theme.Text, row.ZIndex + 1)
+return control
+end
+
+function SectionMethods:Button(params)
+    params = params or {}
+    local control, row = controlBase(self, 20)
+    local outer, inner = field(row, UDim2.new(0, 20, 0, 0), UDim2.new(1, -20, 0, 20), row.ZIndex + 1)
+    text(inner, params.Name or "button", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 1, 0), theme.Text, inner.ZIndex + 1).TextXAlignment = Enum.TextXAlignment.Center
+    local click = buttonOverlay(outer)
+    click.MouseEnter:Connect(function() TweenService:Create(inner, TweenInfo.new(0.15), {BackgroundColor3 = theme.FieldTop}):Play() end)
+    click.MouseLeave:Connect(function() TweenService:Create(inner, TweenInfo.new(0.15), {BackgroundColor3 = theme.Field}):Play() end)
+    click.MouseButton1Down:Connect(function() TweenService:Create(inner, TweenInfo.new(0.1), {BackgroundColor3 = theme.Accent}):Play() end)
+    click.MouseButton1Up:Connect(function() TweenService:Create(inner, TweenInfo.new(0.1), {BackgroundColor3 = theme.FieldTop}):Play() end)
+    click.MouseButton1Click:Connect(function() safeCallback(params.Callback) end)
+    control.Button = click
+    return control
+end
+
+function SectionMethods:Toggle(params)
+    params = params or {}
+    local control, row = controlBase(self, 14)
+    local state = params.Default == true
+    local boxOuter, boxInner = field(row, UDim2.new(0, 0, 0, 3), UDim2.new(0, 8, 0, 8), row.ZIndex + 1, false)
+    local label = text(row, params.Name or params.Text or "toggle", UDim2.new(0, 16, 0, 0), UDim2.new(1, -16, 0, 14), theme.Text, row.ZIndex + 1)
+
+    local function paint() TweenService:Create(boxInner, TweenInfo.new(0.15), {BackgroundColor3 = state and theme.Accent or theme.Field}):Play() end
+    local function setValue(value, call)
+        state = value == true; paint()
+        if params.Flag then 
+            Library.ActiveKeybinds[params.Flag] = state 
+            if Library.UpdateKeybinds then Library:UpdateKeybinds() end
+        end
+        if call ~= false then safeCallback(params.Callback, state) end
+    end
+
+    control.Set = setValue; control.Get = function() return state end
+    buttonOverlay(row).MouseButton1Click:Connect(function() control.Set(not state) end)
+    control.Label = label; control.Box = boxOuter; control.Inner = boxInner
+    paint(); flagObject(params.Flag, control)
+    return control
+end
+
+
+function SectionMethods:Slider(params)
+params = params or {}
+local labelText = params.Name or params.Text; local hasLabel = labelText ~= ""
+local control, row = controlBase(self, hasLabel and 23 or 8)
+local min, max, step = params.Min or 0, params.Max or 100, params.Step or 1
+local precision = params.Precision or (step < 1 and 1 or 0)
+local value = math.clamp(params.Default or params.Value or min, min, max); local dragging = false
+
+    if hasLabel then text(row, labelText or "slider", UDim2.new(0, 20, 0, -2), UDim2.new(1, -20, 0, 14), theme.Text, row.ZIndex + 1) end
+    local outer, inner = field(row, UDim2.new(0, 20, 0, hasLabel and 15 or 0), UDim2.new(1, -20, 0, 8), row.ZIndex + 1)
+    local fill = new("Frame", { Parent = inner, Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = theme.Accent, BorderSizePixel = 0, ZIndex = inner.ZIndex + 1 })
+    local valueLabel = text(inner, "", UDim2.new(0, -42, 0, 0), UDim2.new(0, 84, 1, 0), theme.White, inner.ZIndex + 3)
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Center; valueLabel.TextStrokeTransparency = 0; valueLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+
+    local function setFromX(x, call)
+        local width = math.max(inner.AbsoluteSize.X, 1)
+        local rel = math.clamp((x - inner.AbsolutePosition.X) / width, 0, 1)
+        control.Set(roundStep(min + ((max - min) * rel), step), call)
+    end
+    local function paint()
+        local ratio = math.clamp((value - min) / math.max(max - min, 1), 0, 1)
+        TweenService:Create(fill, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(ratio, 0, 1, 0)}):Play()
+        valueLabel.Position = UDim2.new(ratio, -42, 0, 0); valueLabel.Text = formatValue(value, precision, params.Suffix)
+    end
+    local function setValue(newValue, call)
+        value = math.clamp(newValue, min, max); paint()
+        if call ~= false then safeCallback(params.Callback, value) end
+    end
+
+    control.Set = setValue; control.Get = function() return value end; control.Fill = fill
+    buttonOverlay(outer).MouseButton1Down:Connect(function() dragging = true; setFromX(Mouse.X) end)
+    UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+    UserInputService.InputChanged:Connect(function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then setFromX(input.Position.X) end end)
+    paint(); flagObject(params.Flag, control)
+    return control
+end
+
+
+function SectionMethods:Dropdown(params)
+params = params or {}
+local labelText = params.Name or params.Text; local hasLabel = labelText ~= ""
+local control, row = controlBase(self, hasLabel and 35 or 20)
+local options = params.Options or params.Values or {}
+local selected = params.Default or options[1] or ""; local open = false
+
+    if hasLabel then text(row, labelText or "dropdown", UDim2.new(0, 20, 0, -2), UDim2.new(1, -20, 0, 14), theme.Text, row.ZIndex + 1) end
+    local outer, inner = field(row, UDim2.new(0, 20, 0, hasLabel and 15 or 0), UDim2.new(1, -20, 0, 20), row.ZIndex + 1)
+    local valueLabel = text(inner, selected, UDim2.new(0, 10, 0, 0), UDim2.new(1, -30, 1, 0), theme.Muted, inner.ZIndex + 1); valueLabel.TextTruncate = Enum.TextTruncate.AtEnd
+    local arrow = dropdownArrow(inner, inner.ZIndex + 2)
+    local popupParent = self.Window and self.Window.PopupLayer or row
+    local listFrame = new("Frame", { Parent = popupParent, Position = UDim2.new(), Size = UDim2.new(0, 0, 0, 0), BackgroundColor3 = theme.Field, BorderSizePixel = 0, Visible = false, ClipsDescendants = true, ZIndex = popupParent.ZIndex + 40 })
+    addStroke(listFrame, theme.Border, 1); local listLayout = addList(listFrame, 0)
+
+    local function listHeight() return (#options * 16) + 2 end
+    local function placeList()
+        local parentAbs = popupParent.AbsolutePosition; local fieldAbs = outer.AbsolutePosition
+        listFrame.Position = UDim2.new(0, fieldAbs.X - parentAbs.X, 0, fieldAbs.Y - parentAbs.Y + 22)
+        listFrame.Size = UDim2.new(0, outer.AbsoluteSize.X - 2, 0, listHeight())
+    end
+    local function setOpen(value)
+        open = value == true; arrow:Set(open); if open then placeList() end; listFrame.Visible = open
+    end
+    local function refreshOptions(newOptions)
+        if newOptions then options = newOptions end
+        for _, child in ipairs(listFrame:GetChildren()) do if child:IsA("TextButton") then child:Destroy() end end
+        for index, option in ipairs(options) do
+            local item = new("TextButton", {
+                Parent = listFrame, Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, BorderSizePixel = 0,
+                Text = tostring(option), TextColor3 = (control.IsOptionActive and control.IsOptionActive(option, index) or option == selected) and theme.Accent or theme.Muted,
+                TextXAlignment = Enum.TextXAlignment.Left, TextSize = 12, Font = Enum.Font.Code, LayoutOrder = index, AutoButtonColor = false, ZIndex = listFrame.ZIndex + 1
+            })
+            item.TextTruncate = Enum.TextTruncate.AtEnd; new("UIPadding", { Parent = item, PaddingLeft = UDim.new(0, 10) })
+            item.MouseEnter:Connect(function() TweenService:Create(item, TweenInfo.new(0.1), {BackgroundTransparency = 0.8}):Play() end)
+            item.MouseLeave:Connect(function() TweenService:Create(item, TweenInfo.new(0.1), {BackgroundTransparency = 1}):Play() end)
+            item.MouseButton1Click:Connect(function() control.Set(option); if not control.KeepOpenOnSelect then setOpen(false) else placeList() end end)
+        end
+        if open then placeList() end
+    end
+    local function setValue(value, call)
+        selected = value; valueLabel.Text = tostring(value); refreshOptions()
+        if open then placeList() end
+        if call ~= false then safeCallback(params.Callback, value) end
+    end
+
+    control.Set = setValue; control.Get = function() return selected end
+    control.ValueLabel = valueLabel; control.RefreshOptions = refreshOptions
+    buttonOverlay(outer).MouseButton1Click:Connect(function() setOpen(not open) end)
+    UserInputService.InputBegan:Connect(function(input)
+        if open and input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if not insideAbsolute(listFrame, input.Position) and not insideAbsolute(outer, input.Position) then setOpen(false) end
+        end
+    end)
+    refreshOptions(); flagObject(params.Flag, control)
+    return control
+end
+
+function SectionMethods:MultiDropdown(params)
+    params = params or {}
+    local values = {}
+    for _, value in ipairs(params.Default or {}) do values[value] = true end
+    local displayParams = {}
+    for k, v in pairs(params) do displayParams[k] = v end
+    displayParams.Default = "none"; displayParams.Callback = nil
+    local control = self:Dropdown(displayParams)
+    local oldRefresh = control.RefreshOptions
+    control.KeepOpenOnSelect = true
+    control.IsOptionActive = function(option) return values[option] == true end
+
+    local function compactList(items, limit)
+        local textValue = ""
+        for index, item in ipairs(items) do
+            local nextValue = index == 1 and tostring(item) or (textValue .. ", " .. tostring(item))
+            if #nextValue > limit then return textValue == "" and "..." or (textValue .. ", ...") end
+            textValue = nextValue
+        end
+        return textValue
+    end
+    local function display()
+        local chosen = {}
+        for _, option in ipairs(params.Options or {}) do if values[option] then chosen[#chosen + 1] = option end end
+        return #chosen > 0 and compactList(chosen, 22) or "none"
+    end
+    local function setValue(option, call)
+        if type(option) == "table" then
+            values = option
+        else
+            values[option] = not values[option]
+        end
+        control.ValueLabel.Text = display(); control.RefreshOptions()
+        if call ~= false then safeCallback(params.Callback, values) end
+    end
+    control.Set = setValue; control.Get = function() return values end
+    oldRefresh(params.Options or {}); control.ValueLabel.Text = display()
+    flagObject(params.Flag, control)
+    return control
+end
+
+
+function SectionMethods:TextBox(params)
+params = params or {}
+local control, row = controlBase(self, 35)
+local value = params.Default or ""
+text(row, params.Name or params.Text or "text", UDim2.new(0, 20, 0, -2), UDim2.new(1, -20, 0, 14), theme.Text, row.ZIndex + 1)
+local outer, inner = field(row, UDim2.new(0, 20, 0, 15), UDim2.new(1, -20, 0, 20), row.ZIndex + 1)
+local box = new("TextBox", { Parent = inner, Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(1, -20, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, Text = value, PlaceholderText = params.Placeholder or "", TextColor3 = theme.Muted, PlaceholderColor3 = theme.Muted, TextXAlignment = Enum.TextXAlignment.Left, TextSize = 12, Font = Enum.Font.Code, ClearTextOnFocus = false, ZIndex = inner.ZIndex + 1 })
+
+    local function setValue(newValue, call)
+        value = tostring(newValue or ""); box.Text = value
+        if call ~= false then safeCallback(params.Callback, value) end
+    end
+    control.Set = setValue; control.Get = function() return box.Text end
+    box.FocusLost:Connect(function() value = box.Text; safeCallback(params.Callback, value) end)
+    control.Box = box; flagObject(params.Flag, control)
+    return control
+end
+
+function SectionMethods:Keybind(params)
+    params = params or {}
+    local control, row = controlBase(self, 35)
+    local key = params.Default; local capturing = false
+    text(row, params.Name or "keybind", UDim2.new(0, 20, 0, -2), UDim2.new(1, -20, 0, 14), theme.Text, row.ZIndex + 1)
+    local outer, inner = field(row, UDim2.new(0, 20, 0, 15), UDim2.new(1, -20, 0, 20), row.ZIndex + 1)
+    local keyLabel = text(inner, "", UDim2.new(0, 10, 0, 0), UDim2.new(1, -20, 1, 0), theme.Muted, inner.ZIndex + 1)
+
+    local function paint()
+        keyLabel.Text = capturing and "press key" or (key and (key.Name or tostring(key)) or "none")
+        keyLabel.TextColor3 = capturing and theme.Accent or theme.Muted
+    end
+    local function setValue(newKey, call)
+        key = newKey; paint()
+        if call ~= false then safeCallback(params.Callback or params.Changed, key) end
+    end
+    control.Set = setValue; control.Get = function() return key end
+    buttonOverlay(outer).MouseButton1Click:Connect(function() capturing = true; paint() end)
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if capturing and not gameProcessed then
+            capturing = false
+            control.Set(input.KeyCode ~= Enum.KeyCode.Unknown and input.KeyCode or input.UserInputType)
+        elseif key and input.KeyCode == key and params.Callback then
+            safeCallback(params.Callback, key)
+        end
+    end)
+    paint(); flagObject(params.Flag, control)
+    return control
+end
+
+
+local function attachColorpicker(control, params)
+params = params or {}
+local row = control.Row
+local color = params.Color or params.Default or theme.Accent
+local alpha = params.Alpha or 1
+local hue, sat, val = color:ToHSV()
+local draggingSV, draggingHue, draggingAlpha = false, false, false
+
+    local previewOuter, previewInner = field(row, UDim2.new(1, -20, 0, 3), UDim2.new(0, 20, 0, 8), row.ZIndex + 10)
+    previewInner.BackgroundColor3 = color
+    local popupParent = control.Window and control.Window.PopupLayer or row
+    
+    local popup = new("Frame", { Parent = popupParent, Position = UDim2.new(), Size = UDim2.new(0, 190, 0, 160), BackgroundColor3 = theme.Background, BorderSizePixel = 0, Visible = false, ZIndex = popupParent.ZIndex + 50 })
+    registerTransparency(popup, false); applySupremacyBorders(popup)
+
+    local svCanvas = new("Frame", { Parent = popup, Position = UDim2.new(0, 5, 0, 5), Size = UDim2.new(0, 150, 0, 150), BackgroundColor3 = Color3.fromHSV(hue, 1, 1), BorderSizePixel = 1, BorderColor3 = theme.Border, ZIndex = popup.ZIndex + 1 })
+    local satOverlay = new("Frame", { Parent = svCanvas, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, ZIndex = svCanvas.ZIndex + 1 })
+    new("UIGradient", { Parent = satOverlay, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }) })
+    local valOverlay = new("Frame", { Parent = svCanvas, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = svCanvas.ZIndex + 2 })
+    new("UIGradient", { Parent = valOverlay, Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0) }) })
+    local svMarker = new("Frame", { Parent = svCanvas, Size = UDim2.new(0, 4, 0, 4), BackgroundTransparency = 1, BorderSizePixel = 1, BorderColor3 = theme.White, ZIndex = svCanvas.ZIndex + 5 }); addStroke(svMarker, Color3.new(0, 0, 0), 1, 0)
+    local svHitbox = buttonOverlay(valOverlay, valOverlay.ZIndex + 5)
+
+    local hueCanvas = new("Frame", { Parent = popup, Position = UDim2.new(0, 160, 0, 5), Size = UDim2.new(0, 10, 0, 150), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 1, BorderColor3 = theme.Border, ZIndex = popup.ZIndex + 1 })
+    new("UIGradient", { Parent = hueCanvas, Rotation = 90, Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)), ColorSequenceKeypoint.new(0.167, Color3.fromRGB(255, 255, 0)), ColorSequenceKeypoint.new(0.333, Color3.fromRGB(0, 255, 0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)), ColorSequenceKeypoint.new(0.667, Color3.fromRGB(0, 0, 255)), ColorSequenceKeypoint.new(0.833, Color3.fromRGB(255, 0, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0)) }) })
+    local hueMarker = new("Frame", { Parent = hueCanvas, Size = UDim2.new(1, 2, 0, 2), Position = UDim2.new(0, -1, 0, 0), BackgroundColor3 = theme.White, BorderSizePixel = 1, BorderColor3 = theme.Border, ZIndex = hueCanvas.ZIndex + 5 })
+    local hueHitbox = buttonOverlay(hueCanvas, hueCanvas.ZIndex + 5)
+
+    local alphaBg = new("Frame", { Parent = popup, Position = UDim2.new(0, 175, 0, 5), Size = UDim2.new(0, 10, 0, 150), BackgroundColor3 = rgb(30, 30, 30), BorderSizePixel = 1, BorderColor3 = theme.Border, ZIndex = popup.ZIndex + 1 })
+    local alphaCanvas = new("Frame", { Parent = alphaBg, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = alphaBg.ZIndex + 1 })
+    new("UIGradient", { Parent = alphaCanvas, Rotation = 90, Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }) })
+    local alphaMarker = new("Frame", { Parent = alphaBg, Size = UDim2.new(1, 2, 0, 2), Position = UDim2.new(0, -1, 0, 0), BackgroundColor3 = theme.White, BorderSizePixel = 1, BorderColor3 = theme.Border, ZIndex = alphaBg.ZIndex + 5 })
+    local alphaHitbox = buttonOverlay(alphaBg, alphaBg.ZIndex + 5)
+
+    local function placePopup()
+        local parentAbs = popupParent.AbsolutePosition; local previewAbs = previewOuter.AbsolutePosition
+        popup.Position = UDim2.new(0, previewAbs.X - parentAbs.X - 170, 0, previewAbs.Y - parentAbs.Y + 10) 
+    end
+    local function paint()
+        previewInner.BackgroundColor3 = color; svCanvas.BackgroundColor3 = Color3.fromHSV(hue, 1, 1); alphaCanvas.BackgroundColor3 = color
+        TweenService:Create(svMarker, TweenInfo.new(0.05, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = UDim2.new(sat, -2, 1 - val, -2) }):Play()
+        TweenService:Create(hueMarker, TweenInfo.new(0.05, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = UDim2.new(0, -1, hue, -1) }):Play()
+        TweenService:Create(alphaMarker, TweenInfo.new(0.05, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = UDim2.new(0, -1, 1 - alpha, -1) }):Play()
+    end
+
+    local function updateSV(position) local abs, size = svCanvas.AbsolutePosition, svCanvas.AbsoluteSize; sat = math.clamp((position.X - abs.X) / size.X, 0, 1); val = 1 - math.clamp((position.Y - abs.Y) / size.Y, 0, 1); color = Color3.fromHSV(hue, sat, val); paint(); if params.Callback then safeCallback(params.Callback, color, alpha) end end
+    local function updateHue(position) local abs, size = hueCanvas.AbsolutePosition, hueCanvas.AbsoluteSize; hue = math.clamp((position.Y - abs.Y) / size.Y, 0, 1); color = Color3.fromHSV(hue, sat, val); paint(); if params.Callback then safeCallback(params.Callback, color, alpha) end end
+    local function updateAlpha(position) local abs, size = alphaBg.AbsolutePosition, alphaBg.AbsoluteSize; alpha = 1 - math.clamp((position.Y - abs.Y) / size.Y, 0, 1); paint(); if params.Callback then safeCallback(params.Callback, color, alpha) end end
+
+    previewOuter.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then placePopup(); popup.Visible = not popup.Visible end end)
+    svHitbox.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingSV = true; updateSV(input.Position) end end)
+    hueHitbox.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingHue = true; updateHue(input.Position) end end)
+    alphaHitbox.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingAlpha = true; updateAlpha(input.Position) end end)
+
+    UserInputService.InputChanged:Connect(function(input) 
+        if input.UserInputType == Enum.UserInputType.MouseMovement then 
+            if draggingSV then updateSV(input.Position) end
+            if draggingHue then updateHue(input.Position) end
+            if draggingAlpha then updateAlpha(input.Position) end
+        end 
+    end)
+    UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then draggingSV = false; draggingHue = false; draggingAlpha = false end end)
+    UserInputService.InputBegan:Connect(function(input)
+        if popup.Visible and input.UserInputType == Enum.UserInputType.MouseButton1 and not insideAbsolute(popup, input.Position) and not insideAbsolute(previewOuter, input.Position) then popup.Visible = false end
+    end)
+
+    local picker = { 
+        Set = function(newColor, newAlpha, call) color = newColor or theme.Accent; alpha = newAlpha or 1; hue, sat, val = color:ToHSV(); paint(); if call ~= false then safeCallback(params.Callback or params.Changed, color, alpha) end end, 
+        Get = function() return color, alpha end 
+    }
+    paint(); flagObject(params.Flag, picker)
+    return picker
+end
+
+function ControlMethods:Colorpicker(params) self.ColorpickerControl = attachColorpicker(self, params); return self end
+function SectionMethods:Colorpicker(params) local control = self:Label({ Text = params and (params.Name or params.Text) or "color" }); control:Colorpicker(params); return control end
+
+
+function Library:SetAccent(color)
+theme.Accent = color
+for _, window in ipairs(self.Windows) do
+for _, tab in ipairs(window.Tabs) do
+if tab.IsActive then tab.Button.TextColor3 = color end
+for _, section in ipairs(tab.Sections) do
+for _, control in ipairs(section.Controls) do
+if control.Box and control.Inner and control.Get and control.Get() then control.Inner.BackgroundColor3 = color end
+if control.Fill then control.Fill.BackgroundColor3 = color end
+end
+end
+end
+end
+end
+
+function Library:Notify(textStr, duration)
+    duration = duration or self.NotificationSettings.Duration
+    local targetTrans = self.NotificationSettings.Transparency
+    
+    local notifOuter = new("Frame", { Parent = self.NotifLayout, Size = UDim2.new(1, 0, 0, 24), BackgroundTransparency = 1 })
+    local notif = new("Frame", { Parent = notifOuter, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = theme.Background })
+    
+    local borderColors = { rgb(60, 60, 60), rgb(40, 40, 40), rgb(40, 40, 40), rgb(40, 40, 40), rgb(60, 60, 60), rgb(31, 31, 31) }
+    local strokes = {}
+    local totalThickness = 0
+    for _, color in ipairs(borderColors) do
+        local borderFrame = new("Frame", { Parent = notif, Size = UDim2.new(1, (totalThickness - 1) * 2 + 2, 1, (totalThickness - 1) * 2 + 2), Position = UDim2.new(0, -(totalThickness - 1) - 1, 0, -(totalThickness - 1) - 1), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = notif.ZIndex + 1 })
+        local stroke = new("UIStroke", { Parent = borderFrame, LineJoinMode = Enum.LineJoinMode.Miter, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = color, Thickness = 1 })
+        strokes[#strokes+1] = stroke; totalThickness = totalThickness + 1
+    end
+
+    local txt = text(notif, textStr, UDim2.new(0, 8, 0, 0), UDim2.new(1, -16, 1, 0), theme.Text, notif.ZIndex + 2)
+    local accentLine = new("Frame", { Parent = notif, Size = UDim2.new(0, 2, 1, 0), Position = UDim2.new(0, 0, 0, 0), BackgroundColor3 = theme.Accent, BorderSizePixel = 0, ZIndex = notif.ZIndex + 2 })
+
+    notif.BackgroundTransparency = 1; txt.TextTransparency = 1; accentLine.BackgroundTransparency = 1
+    for _, stroke in ipairs(strokes) do stroke.Transparency = 1 end
+
+    local function tweenTrans(trans)
+        TweenService:Create(notif, TweenInfo.new(0.3), {BackgroundTransparency = trans}):Play()
+        TweenService:Create(txt, TweenInfo.new(0.3), {TextTransparency = trans}):Play()
+        TweenService:Create(accentLine, TweenInfo.new(0.3), {BackgroundTransparency = trans}):Play()
+        for _, stroke in ipairs(strokes) do TweenService:Create(stroke, TweenInfo.new(0.3), {Transparency = trans}):Play() end
+    end
+
+    tweenTrans(targetTrans)
+    task.delay(duration, function()
+        tweenTrans(1); task.wait(0.3); notifOuter:Destroy()
+    end)
+end
+
+function Library:GetConfigs()
+    local list = {}
+    ensureFolder("supremacy_reborn/configs")
+    if isfolder and listfiles and isfolder("supremacy_reborn/configs") then
+        local s, files = pcall(function() return listfiles("supremacy_reborn/configs") end)
+        if s and files then
+            for _, file in ipairs(files) do
+                local name = file:match("([^/\\]+)%.json$")
+                if name then table.insert(list, name) end
+            end
+        end
+    end
+    if #list == 0 then table.insert(list, "default") end
+    return list
+end
+
+function Library:RefreshConfigs()
+    if self.Flags["config_list"] and self.Flags["config_list"].RefreshOptions then
+        self.Flags["config_list"].RefreshOptions(self:GetConfigs())
+    end
+end
+
+function Library:SaveConfig(name)
+    if not name or name == "" then self:Notify("Invalid config name", 3) return end
+    ensureFolder("supremacy_reborn/configs")
+    local data = { Flags = {}, Positions = {} }
+    for flag, control in pairs(self.Flags) do
+        if control.Get and not flag:match("^config_") then
+            local val = control.Get()
+            if typeof(val) == "Color3" then val = {val.R, val.G, val.B} end
+            if typeof(val) == "EnumItem" then val = val.Name end
+            data.Flags[flag] = val
+        end
+    end
+
+    if self.Windows[1] then
+        local pos = self.Windows[1].Root.Position
+        data.Positions.Main = {pos.X.Scale, pos.X.Offset, pos.Y.Scale, pos.Y.Offset}
+    end
+    if self.WatermarkFrame then
+        local pos = self.WatermarkFrame.Position
+        data.Positions.Watermark = {pos.X.Scale, pos.X.Offset, pos.Y.Scale, pos.Y.Offset}
+    end
+    if self.KeybindFrame then
+        local pos = self.KeybindFrame.Position
+        data.Positions.Keybinds = {pos.X.Scale, pos.X.Offset, pos.Y.Scale, pos.Y.Offset}
+    end
+
+    local s, err = pcall(function()
+        writefile("supremacy_reborn/configs/" .. name .. ".json", HttpService:JSONEncode(data))
+    end)
+    if s then self:Notify("Saved config: " .. name, 3) else self:Notify("Save Error!", 3) end
+    self:RefreshConfigs()
+end
+
+function Library:LoadConfig(name)
+    if not name or name == "" then return end
+    local path = "supremacy_reborn/configs/" .. name .. ".json"
+    local success, fileData = pcall(function() return readfile(path) end)
+    if not success then self:Notify("Config not found", 3) return end
+    
+    local decodeSuccess, data = pcall(function() return HttpService:JSONDecode(fileData) end)
+    if not decodeSuccess then self:Notify("Failed to parse config", 3) return end
+
+    if data.Flags then
+        for flag, val in pairs(data.Flags) do
+            if self.Flags[flag] and self.Flags[flag].Set then
+                local currentVal = self.Flags[flag].Get()
+                if typeof(currentVal) == "Color3" and type(val) == "table" then 
+                    val = Color3.new(unpack(val))
+                    pcall(function() self.Flags[flag].Set(val, 1, true) end)
+                elseif typeof(currentVal) == "EnumItem" and type(val) == "string" then 
+                    pcall(function() val = Enum.KeyCode[val] end)
+                    pcall(function() self.Flags[flag].Set(val, true) end)
+                else
+                    pcall(function() self.Flags[flag].Set(val, true) end)
+                end
+            end
+        end
+    end
+    if data.Positions then
+        if data.Positions.Main and self.Windows[1] then self.Windows[1].Root.Position = UDim2.new(unpack(data.Positions.Main)) end
+        if data.Positions.Watermark and self.WatermarkFrame then self.WatermarkFrame.Position = UDim2.new(unpack(data.Positions.Watermark)) end
+        if data.Positions.Keybinds and self.KeybindFrame then self.KeybindFrame.Position = UDim2.new(unpack(data.Positions.Keybinds)) end
+    end
+    self:Notify("Loaded config: " .. name, 3)
+end
+
+function Library:CreateWatermark(textValue)
+    local wmGui = Instance.new("ScreenGui", self.Parent)
+    wmGui.Name = "Supremacy_Watermark"
+    wmGui.IgnoreGuiInset = true
+
+    local wmFrame = new("Frame", { 
+        Parent = wmGui, Size = UDim2.new(0, 0, 0, 18), Position = UDim2.new(1, -15, 0, 15), 
+        AnchorPoint = Vector2.new(1, 0), BackgroundColor3 = theme.Background, BorderSizePixel = 0
+    })
+    self.WatermarkFrame = wmFrame
+    registerTransparency(wmFrame, false); applySupremacyBorders(wmFrame) 
+    MakeDraggable(wmFrame, wmFrame)
+
+    local wmText = text(wmFrame, textValue, UDim2.new(0, 6, 0, 0), UDim2.new(1, -12, 1, 0), theme.Text)
+    wmText.TextStrokeTransparency = 0; wmText.TextStrokeColor3 = Color3.new(0,0,0)
+    
+    RunService.RenderStepped:Connect(function()
+        if wmText.TextBounds.X > 0 then wmFrame.Size = UDim2.new(0, wmText.TextBounds.X + 16, 0, 18) end
+    end)
+    return { SetText = function(newText) wmText.Text = newText end, SetVisible = function(vis) wmGui.Enabled = vis end, Label = wmText }
+end
+
+function Library:UpdateKeybinds()
+    if not self.KeybindContainer then return end
+    for _, child in ipairs(self.KeybindContainer:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
+    local count = 0
+    for flagName, isActive in pairs(self.ActiveKeybinds) do
+        if isActive then
+            count = count + 1
+            local item = text(self.KeybindContainer, flagName, UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 14), theme.White)
+            item.TextSize = 12; item.TextStrokeTransparency = 0; item.TextStrokeColor3 = Color3.new(0,0,0)
+        end
+    end
+    self.KeybindFrame.Size = UDim2.new(0, 180, 0, 22 + (count * 16))
+end
+
+function Library:CreateKeybindList()
+    local kbGui = Instance.new("ScreenGui", self.Parent)
+    kbGui.Name = "Supremacy_KeybindList"
+    kbGui.IgnoreGuiInset = true
+
+    local kbFrame = new("Frame", { 
+        Parent = kbGui, Size = UDim2.new(0, 180, 0, 20), Position = UDim2.new(0, 15, 0.5, 0), 
+        BackgroundColor3 = theme.Background, ClipsDescendants = false
+    })
+    self.KeybindFrame = kbFrame
+    registerTransparency(kbFrame, false); applySupremacyBorders(kbFrame) 
+    MakeDraggable(kbFrame, kbFrame)
+
+    local kbTitle = text(kbFrame, "keybinds", UDim2.new(0, 0, 0, 0), UDim2.new(1, 0, 0, 18), theme.Text)
+    kbTitle.TextXAlignment = Enum.TextXAlignment.Center; kbTitle.TextStrokeTransparency = 0; kbTitle.TextStrokeColor3 = Color3.new(0,0,0)
+    local container = new("Frame", { Parent = kbFrame, Position = UDim2.new(0, 6, 0, 18), Size = UDim2.new(1, -12, 1, -22), BackgroundTransparency = 1 })
+    local layout = addList(container, 2)
+    self.KeybindContainer = container
+
+    self:UpdateKeybinds()
+    return { SetVisible = function(vis) kbGui.Enabled = vis end }
+end
+
+function Library:SetFontMode(mode) setMenuFontMode(mode) end
+function Library:SetFontSize(size) setMenuFontSize(size) end
+function Library:RegisterMenuText(inst, baseFont) registerMenuText(inst, baseFont) end
+
+return Library
+
+
+end
+
+return SupremacyUI
+
+--[[
+local SupremacyUI = loadstring(game:HttpGet("..."))()
+local Library = SupremacyUI.new({ Accent = Color3.fromRGB(179, 0, 45), MenuTransparency = 0.05 })
+
+local Watermark = Library:CreateWatermark("supremacy | test | 0")
+task.spawn(function()
+while task.wait(1) do
+local ping = 45
+pcall(function() ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) end)
+Watermark.SetText(string.format("supremacy | test | %d ping", ping))
+end
+end)
+
+local KeybindList = Library:CreateKeybindList()
+local Window = Library:Window({ Name = "supremacy", Size = UDim2.new(0, 630, 0, 550), Bind = Enum.KeyCode.Insert, Visible = true })
+
+local function split(tab, leftName, rightName) return tab:Section({ Name = leftName, Side = "Left" }), tab:Section({ Name = rightName, Side = "Right" }) end
+local function toggle(section, name, flag, default) return section:Toggle({ Name = name, Flag = flag, Default = default == true }) end
+local function slider(section, name, flag, min, max, default, suffix, step) return section:Slider({ Name = name, Flag = flag, Min = min, Max = max, Default = default, Suffix = suffix, Step = step or 1 }) end
+
+local Aimbot = Window:Tab({ Name = "aimbot" })
+do
+local left, right = split(Aimbot, "general", "accuracy")
+toggle(left, "enable aimbot", "aimbot_enable")
+slider(left, "minimal hit damage", "aimbot_minimal_damage", 1, 100, 25, "hp")
+end
+
+-- ...
+Library:Notify("Supremacy loaded in 0 seconds", 5)
+]]
